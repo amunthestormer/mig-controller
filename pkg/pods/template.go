@@ -24,11 +24,11 @@ func ListTemplatePods(client compat.Client, namespaces []string) ([]corev1.Pod, 
 		}
 		pods = append(pods, newPods...)
 
-		newPods, err = listDeploymentConfigTemplatePodsForNamespace(client, ns)
-		if err != nil {
-			return nil, err
-		}
-		pods = append(pods, newPods...)
+		//newPods, err = listDeploymentConfigTemplatePodsForNamespace(client, ns)
+		//if err != nil {
+		//	return nil, err
+		//}
+		//pods = append(pods, newPods...)
 
 		newPods, err = listReplicationControllerTemplatePodsForNamespace(client, ns)
 		if err != nil {

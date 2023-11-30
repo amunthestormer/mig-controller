@@ -1,0 +1,11 @@
+apiVersion: migration.openshift.io/v1alpha1
+kind: MigMigration
+metadata:
+  name: migmigration-example
+  namespace: openshift-migration
+spec:
+  migPlanRef:
+    name: migplan-example
+    namespace: openshift-migration
+  quiescePods: true
+  stage: false

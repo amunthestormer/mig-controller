@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= quay.io/ocpmigrate/mig-controller:latest
+IMG ?= linhnt35/mig-controller:latest
 GOOS ?= `go env GOOS`
 GOBIN ?= ${GOPATH}/bin
 GO111MODULE = auto

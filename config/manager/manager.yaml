@@ -75,6 +75,7 @@ spec:
         secret:
           defaultMode: 420
           secretName: webhook-server-secret
+      serviceAccountName: mig-controller-manager
 ---
 apiVersion: v1
 kind: Secret

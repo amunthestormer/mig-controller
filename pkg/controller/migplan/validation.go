@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
+	"k8s.io/klog"
 	"net"
 	"path"
 	"sort"
@@ -16,7 +18,7 @@ import (
 	"github.com/konveyor/mig-controller/pkg/pods"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/konveyor/mig-controller/pkg/settings"
-	"github.com/opentracing/opentracing-go"
+	_ "github.com/opentracing/opentracing-go"
 	kapi "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/fields"
@@ -189,11 +191,11 @@ func (r ReconcileMigPlan) validate(ctx context.Context, plan *migapi.MigPlan) er
 		return liberr.Wrap(err)
 	}
 
-	// Registry proxy secret
-	err = r.validateRegistryProxySecrets(ctx, plan)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//// Registry proxy secret
+	//err = r.validateRegistryProxySecrets(ctx, plan)
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 
 	// Validate health of Pods
 	err = r.validatePodHealth(ctx, plan)
@@ -218,12 +220,12 @@ func (r ReconcileMigPlan) validate(ctx context.Context, plan *migapi.MigPlan) er
 	if err != nil {
 		return liberr.Wrap(err)
 	}
-
-	// Versions
-	err = r.validateOperatorVersions(ctx, plan)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//
+	//// Versions
+	//err = r.validateOperatorVersions(ctx, plan)
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 	return nil
 }
 
@@ -399,6 +401,7 @@ func (r ReconcileMigPlan) validatePossibleMigrationTypes(ctx context.Context, pl
 func (r ReconcileMigPlan) getPotentialFilePermissionConflictNamespaces(plan *migapi.MigPlan) ([]string, error) {
 	srcCluster, err := plan.GetSourceCluster(r)
 	if err != nil {
+		klog.Infof("GetSourceCluster: %v", err)
 		return nil, liberr.Wrap(err)
 	}
 	if srcCluster == nil || !srcCluster.Status.IsReady() {
@@ -406,10 +409,12 @@ func (r ReconcileMigPlan) getPotentialFilePermissionConflictNamespaces(plan *mig
 	}
 	srcClient, err := srcCluster.GetClient(r)
 	if err != nil {
+		klog.Infof("GetClient: %v", err)
 		return nil, liberr.Wrap(err)
 	}
 	destCluster, err := plan.GetDestinationCluster(r)
 	if err != nil {
+		klog.Infof("GetDestinationCluster: %v", err)
 		return nil, liberr.Wrap(err)
 	}
 	if destCluster == nil {
@@ -417,6 +422,7 @@ func (r ReconcileMigPlan) getPotentialFilePermissionConflictNamespaces(plan *mig
 	}
 	destClient, err := destCluster.GetClient(r)
 	if err != nil {
+		klog.Infof("GetClient: %v", err)
 		return nil, liberr.Wrap(err)
 	}
 	erroredNs := []string{}
@@ -425,12 +431,14 @@ func (r ReconcileMigPlan) getPotentialFilePermissionConflictNamespaces(plan *mig
 		srcNsDef := &kapi.Namespace{}
 		err = srcClient.Get(context.TODO(), types.NamespacedName{Name: srcNs}, srcNsDef)
 		if err != nil {
+			klog.Infof("GetNameSpaceMapping for srcClient: %v", err)
 			erroredNs = append(erroredNs, destNs)
 			continue
 		}
 		destNsDef := &kapi.Namespace{}
 		err = destClient.Get(context.TODO(), types.NamespacedName{Name: destNs}, destNsDef)
 		if err != nil {
+			klog.Infof("GetNameSpaceMapping for destClient: %v", err)
 			if !k8serror.IsNotFound(err) {
 				erroredNs = append(erroredNs, destNs)
 			}
@@ -628,21 +636,32 @@ func (r ReconcileMigPlan) validatePodProperties(ctx context.Context, plan *migap
 	if err != nil {
 		return liberr.Wrap(err)
 	}
+
+	//Test
+	version, errorTest := client.ServerVersion()
+	if errorTest != nil {
+		klog.Infof("Test Get Pod default namespace error %v, VERSION Major:%v, Minor:%v", errorTest, client.MajorVersion(), client.MinorVersion())
+	}
+	klog.Infof("SERVER VERSION: %v.%v", version.Major, version.Minor)
+	// End Test
+
 	count := 0
 	limit := Settings.Plan.PodLimit
 
 	nsWithNodeSelectors := make([]string, 0)
 	for _, name := range plan.GetSourceNamespaces() {
+		klog.Infof("validatePodProperties Namespace: %v", name)
 		list := kapi.PodList{}
 		options := k8sclient.ListOptions{
 			FieldSelector: fields.SelectorFromSet(
 				fields.Set{
 					"status.phase": string(kapi.PodRunning),
 				}),
-			Namespace: name,
+			Namespace: "default",
 		}
 		err := client.List(context.TODO(), &list, &options)
 		if err != nil {
+			klog.Infof("validatePodProperties List Pod: %v", err)
 			return liberr.Wrap(err)
 		}
 		count += len(list.Items)
@@ -753,18 +772,18 @@ func (r ReconcileMigPlan) validateSourceCluster(ctx context.Context, plan *migap
 	}
 
 	// No Registry Path
-	registryPath, err := cluster.GetRegistryPath(r)
-	if !plan.Spec.IndirectImageMigration && (err != nil || registryPath == "") {
-		plan.Status.SetCondition(migapi.Condition{
-			Type:     SourceClusterNoRegistryPath,
-			Status:   True,
-			Category: Critical,
-			Reason:   NotSet,
-			Message: fmt.Sprintf("Direct image migration is selected and the source cluster %s is missing a configured Registry Path",
-				path.Join(ref.Namespace, ref.Name)),
-		})
-		return nil
-	}
+	//registryPath, err := cluster.GetRegistryPath(r)
+	//if !plan.Spec.IndirectImageMigration && (err != nil || registryPath == "") {
+	//	plan.Status.SetCondition(migapi.Condition{
+	//		Type:     SourceClusterNoRegistryPath,
+	//		Status:   True,
+	//		Category: Critical,
+	//		Reason:   NotSet,
+	//		Message: fmt.Sprintf("Direct image migration is selected and the source cluster %s is missing a configured Registry Path",
+	//			path.Join(ref.Namespace, ref.Name)),
+	//	})
+	//	return nil
+	//}
 
 	return nil
 }
@@ -820,18 +839,18 @@ func (r ReconcileMigPlan) validateDestinationCluster(ctx context.Context, plan *
 	}
 
 	// No Registry Path
-	registryPath, err := cluster.GetRegistryPath(r)
-	if !plan.Spec.IndirectImageMigration && (err != nil || registryPath == "") {
-		plan.Status.SetCondition(migapi.Condition{
-			Type:     DestinationClusterNoRegistryPath,
-			Status:   True,
-			Category: Critical,
-			Reason:   NotSet,
-			Message: fmt.Sprintf("Direct image migration is selected and the destination cluster %s is missing a configured Registry Path",
-				path.Join(ref.Namespace, ref.Name)),
-		})
-		return nil
-	}
+	//registryPath, err := cluster.GetRegistryPath(r)
+	//if !plan.Spec.IndirectImageMigration && (err != nil || registryPath == "") {
+	//	plan.Status.SetCondition(migapi.Condition{
+	//		Type:     DestinationClusterNoRegistryPath,
+	//		Status:   True,
+	//		Category: Critical,
+	//		Reason:   NotSet,
+	//		Message: fmt.Sprintf("Direct image migration is selected and the destination cluster %s is missing a configured Registry Path",
+	//			path.Join(ref.Namespace, ref.Name)),
+	//	})
+	//	return nil
+	//}
 
 	return nil
 }
@@ -887,10 +906,12 @@ func (r ReconcileMigPlan) validateRequiredNamespaces(ctx context.Context, plan *
 	}
 	err := r.validateSourceNamespaces(plan)
 	if err != nil {
+		klog.Infof("validateSourceNamespaces: %v", err)
 		return liberr.Wrap(err)
 	}
 	err = r.validateDestinationNamespaces(plan)
 	if err != nil {
+		klog.Infof("validateDestinationNamespaces: %v", err)
 		return liberr.Wrap(err)
 	}
 
@@ -940,6 +961,7 @@ func (r ReconcileMigPlan) validateSourceNamespaces(plan *migapi.MigPlan) error {
 		if k8serror.IsNotFound(err) {
 			notFound = append(notFound, name)
 		} else {
+			klog.Infof("validateSourceNamespaces GET NAMESPACE: %v", err)
 			return liberr.Wrap(err)
 		}
 	}

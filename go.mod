@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/Azure/azure-sdk-for-go v61.4.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.24
-	github.com/Azure/go-autorest/autorest/adal v0.9.18
+	github.com/Azure/go-autorest/autorest/adal v0.9.23
 	github.com/aws/aws-sdk-go v1.35.23
 	github.com/containers/image/v5 v5.17.0
 	github.com/deckarep/golang-set v1.7.1
@@ -35,6 +35,7 @@ require (
 	k8s.io/api v0.22.14
 	k8s.io/apimachinery v0.22.14
 	k8s.io/client-go v0.22.14
+	k8s.io/klog v1.0.0
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed
 	sigs.k8s.io/controller-runtime v0.10.2
 )
@@ -82,7 +83,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
@@ -142,7 +143,7 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
@@ -210,3 +211,5 @@ replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v0.10.2-0.2
 replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190716152234-9ea19f9dd578
 
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.9.7
+
+replace vbom.ml/util => github.com/fvbommel/util v0.0.3

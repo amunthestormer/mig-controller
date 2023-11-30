@@ -42,11 +42,11 @@ var podManagingResources = [...]schema.GroupVersionKind{
 		Kind:    "replicaset",
 		Version: "v1",
 	},
-	schema.GroupVersionKind{
-		Group:   "apps.openshift.io",
-		Kind:    "deploymentconfig",
-		Version: "v1",
-	},
+	//schema.GroupVersionKind{
+	//	Group:   "apps.openshift.io",
+	//	Kind:    "deploymentconfig",
+	//	Version: "v1",
+	//},
 }
 
 // PodManagersRecreated does verify that ReplicaSets, Deployments,

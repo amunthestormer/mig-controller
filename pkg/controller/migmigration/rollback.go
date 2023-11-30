@@ -8,7 +8,6 @@ import (
 	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/gvk"
-	ocapi "github.com/openshift/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,12 +17,12 @@ import (
 // Delete namespace and cluster-scoped resources on dest cluster
 func (t *Task) deleteMigrated() error {
 	// Delete 'deployer' and 'hooks' Pods that DeploymentConfig leaves behind upon DC deletion.
-	err := t.deleteDeploymentConfigLeftoverPods()
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//err := t.deleteDeploymentConfigLeftoverPods()
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 
-	err = t.deleteMigratedNamespaceScopedResources()
+	err := t.deleteMigratedNamespaceScopedResources()
 	if err != nil {
 		return liberr.Wrap(err)
 	}
@@ -36,96 +35,96 @@ func (t *Task) deleteMigrated() error {
 	return nil
 }
 
-func (t *Task) deleteDeploymentConfigLeftoverPods() error {
-	// DeploymentConfigs are an exception to the general policy of rollback deleting everything with
-	// the label "migrated-by-migplan: migplan-uid" because DCs spawn additional Pods without
-	// ownerRefs that will mount PVCs. When we delete the DCs, it doesn't cascade to the
-	// all Pods (e.g. deployer) that the DC created, and those Pods sometimes stop PVCs from terminating.
-	// This custom deletion routine for DCs is needed to avoid rollback hanging waiting on PVCs
-	// to finish terminating.
-	for _, ns := range t.destinationNamespaces() {
-		destClient, err := t.getDestinationClient()
-		if err != nil {
-			return liberr.Wrap(err)
-		}
-		// Iterate over all DeploymentConfigs belonging migrated by current MigPlan in target cluster namespaces
-		dcList := ocapi.DeploymentConfigList{}
-		err = destClient.List(
-			context.TODO(),
-			&dcList,
-			k8sclient.InNamespace(ns),
-			k8sclient.MatchingLabels(map[string]string{migapi.MigPlanLabel: string(t.PlanResources.MigPlan.UID)}),
-		)
-		if err != nil {
-			return liberr.Wrap(err)
-		}
-		for _, dc := range dcList.Items {
-			// Iterate over ReplicationControllers associated with DCs
-			rcList := corev1.ReplicationControllerList{}
-			err = destClient.List(
-				context.TODO(),
-				&rcList,
-				k8sclient.InNamespace(ns),
-				k8sclient.MatchingLabels(map[string]string{"openshift.io/deployment-config.name": dc.GetName()}),
-			)
-			if err != nil {
-				return liberr.Wrap(err)
-			}
-			for _, rc := range rcList.Items {
-				// Delete Deployer Pod(s) for RC
-				podList := corev1.PodList{}
-				err = destClient.List(
-					context.TODO(),
-					&podList,
-					k8sclient.InNamespace(ns),
-					k8sclient.MatchingLabels(map[string]string{"openshift.io/deployer-pod-for.name": rc.GetName()}),
-				)
-				for _, pod := range podList.Items {
-					t.Log.Info(
-						"Rollback: Deleting Deployer Pod associated with migrated DeploymentConfig.",
-						"pod", path.Join(pod.Namespace, pod.Name),
-						"replicationController", path.Join(rc.Namespace, rc.Name),
-						"deploymentConfig", path.Join(dc.Namespace, dc.Name))
-					err = destClient.Delete(context.TODO(), &pod)
-					if err != nil {
-						return liberr.Wrap(err)
-					}
-				}
-
-				// Delete RCs matching DC name to remove old Pods
-				t.Log.Info(
-					"Rollback: Deleting ReplicationController associated with migrated DeploymentConfig.",
-					"replicationController", path.Join(rc.Namespace, rc.Name),
-					"deploymentConfig", path.Join(dc.Namespace, dc.Name))
-				err = destClient.Delete(context.TODO(), &rc)
-				if err != nil {
-					return liberr.Wrap(err)
-				}
-			}
-			// Pods belonging to Paused DCs dont get automatically removed either.
-			if dc.Spec.Paused {
-				pausedPodList := corev1.PodList{}
-				err = destClient.List(
-					context.TODO(),
-					&pausedPodList,
-					k8sclient.InNamespace(ns),
-					k8sclient.MatchingLabels(map[string]string{"deploymentconfig": dc.Name}),
-				)
-				for _, pod := range pausedPodList.Items {
-					t.Log.Info(
-						"Rollback: Deleting Pod associated with migrated paused DeploymentConfig.",
-						"pod", path.Join(pod.Namespace, pod.Name),
-						"deploymentConfig", path.Join(dc.Namespace, dc.Name))
-					err = destClient.Delete(context.TODO(), &pod)
-					if err != nil {
-						return liberr.Wrap(err)
-					}
-				}
-			}
-		}
-	}
-	return nil
-}
+//func (t *Task) deleteDeploymentConfigLeftoverPods() error {
+//	// DeploymentConfigs are an exception to the general policy of rollback deleting everything with
+//	// the label "migrated-by-migplan: migplan-uid" because DCs spawn additional Pods without
+//	// ownerRefs that will mount PVCs. When we delete the DCs, it doesn't cascade to the
+//	// all Pods (e.g. deployer) that the DC created, and those Pods sometimes stop PVCs from terminating.
+//	// This custom deletion routine for DCs is needed to avoid rollback hanging waiting on PVCs
+//	// to finish terminating.
+//	for _, ns := range t.destinationNamespaces() {
+//		destClient, err := t.getDestinationClient()
+//		if err != nil {
+//			return liberr.Wrap(err)
+//		}
+//		// Iterate over all DeploymentConfigs belonging migrated by current MigPlan in target cluster namespaces
+//		dcList := ocapi.DeploymentConfigList{}
+//		err = destClient.List(
+//			context.TODO(),
+//			&dcList,
+//			k8sclient.InNamespace(ns),
+//			k8sclient.MatchingLabels(map[string]string{migapi.MigPlanLabel: string(t.PlanResources.MigPlan.UID)}),
+//		)
+//		if err != nil {
+//			return liberr.Wrap(err)
+//		}
+//		for _, dc := range dcList.Items {
+//			// Iterate over ReplicationControllers associated with DCs
+//			rcList := corev1.ReplicationControllerList{}
+//			err = destClient.List(
+//				context.TODO(),
+//				&rcList,
+//				k8sclient.InNamespace(ns),
+//				k8sclient.MatchingLabels(map[string]string{"openshift.io/deployment-config.name": dc.GetName()}),
+//			)
+//			if err != nil {
+//				return liberr.Wrap(err)
+//			}
+//			for _, rc := range rcList.Items {
+//				// Delete Deployer Pod(s) for RC
+//				podList := corev1.PodList{}
+//				err = destClient.List(
+//					context.TODO(),
+//					&podList,
+//					k8sclient.InNamespace(ns),
+//					k8sclient.MatchingLabels(map[string]string{"openshift.io/deployer-pod-for.name": rc.GetName()}),
+//				)
+//				for _, pod := range podList.Items {
+//					t.Log.Info(
+//						"Rollback: Deleting Deployer Pod associated with migrated DeploymentConfig.",
+//						"pod", path.Join(pod.Namespace, pod.Name),
+//						"replicationController", path.Join(rc.Namespace, rc.Name),
+//						"deploymentConfig", path.Join(dc.Namespace, dc.Name))
+//					err = destClient.Delete(context.TODO(), &pod)
+//					if err != nil {
+//						return liberr.Wrap(err)
+//					}
+//				}
+//
+//				// Delete RCs matching DC name to remove old Pods
+//				t.Log.Info(
+//					"Rollback: Deleting ReplicationController associated with migrated DeploymentConfig.",
+//					"replicationController", path.Join(rc.Namespace, rc.Name),
+//					"deploymentConfig", path.Join(dc.Namespace, dc.Name))
+//				err = destClient.Delete(context.TODO(), &rc)
+//				if err != nil {
+//					return liberr.Wrap(err)
+//				}
+//			}
+//			// Pods belonging to Paused DCs dont get automatically removed either.
+//			if dc.Spec.Paused {
+//				pausedPodList := corev1.PodList{}
+//				err = destClient.List(
+//					context.TODO(),
+//					&pausedPodList,
+//					k8sclient.InNamespace(ns),
+//					k8sclient.MatchingLabels(map[string]string{"deploymentconfig": dc.Name}),
+//				)
+//				for _, pod := range pausedPodList.Items {
+//					t.Log.Info(
+//						"Rollback: Deleting Pod associated with migrated paused DeploymentConfig.",
+//						"pod", path.Join(pod.Namespace, pod.Name),
+//						"deploymentConfig", path.Join(dc.Namespace, dc.Name))
+//					err = destClient.Delete(context.TODO(), &pod)
+//					if err != nil {
+//						return liberr.Wrap(err)
+//					}
+//				}
+//			}
+//		}
+//	}
+//	return nil
+//}
 
 // Delete migrated namespace-scoped resources on dest cluster
 func (t *Task) deleteMigratedNamespaceScopedResources() error {

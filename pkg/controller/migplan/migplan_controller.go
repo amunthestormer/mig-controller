@@ -19,17 +19,16 @@ package migplan
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/konveyor/mig-controller/pkg/errorutil"
-	"github.com/opentracing/opentracing-go"
-
 	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
+	"github.com/konveyor/mig-controller/pkg/errorutil"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/konveyor/mig-controller/pkg/settings"
 	kapi "k8s.io/api/core/v1"
@@ -253,14 +252,14 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// If intelligent pv resizing is enabled, Check if migAnalytics exists
-	if Settings.EnableIntelligentPVResize {
-		err = r.ensureMigAnalytics(ctx, plan)
-		if err != nil {
-			log.Trace(err)
-			return reconcile.Result{Requeue: true}, nil
-		}
-	}
+	//// If intelligent pv resizing is enabled, Check if migAnalytics exists
+	//if Settings.EnableIntelligentPVResize {
+	//	err = r.ensureMigAnalytics(ctx, plan)
+	//	if err != nil {
+	//		log.Trace(err)
+	//		return reconcile.Result{Requeue: true}, nil
+	//	}
+	//}
 
 	// Set excluded resources on Status.
 	err = r.setExcludedResourceList(plan)

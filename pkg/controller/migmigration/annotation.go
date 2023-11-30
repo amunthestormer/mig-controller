@@ -8,8 +8,6 @@ import (
 
 	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
-	"github.com/konveyor/mig-controller/pkg/compat"
-	imagev1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -75,15 +73,15 @@ func (t *Task) annotateStageResources() (bool, error) {
 		return false, nil
 	}
 
-	if t.indirectImageMigration() {
-		itemsUpdated, err = t.labelImageStreams(sourceClient, itemsUpdated)
-		if err != nil {
-			return false, liberr.Wrap(err)
-		}
-		if itemsUpdated > AnnotationsPerReconcile {
-			return false, nil
-		}
-	}
+	//if t.indirectImageMigration() {
+	//	itemsUpdated, err = t.labelImageStreams(sourceClient, itemsUpdated)
+	//	if err != nil {
+	//		return false, liberr.Wrap(err)
+	//	}
+	//	if itemsUpdated > AnnotationsPerReconcile {
+	//		return false, nil
+	//	}
+	//}
 	return true, nil
 }
 
@@ -362,41 +360,41 @@ func (t *Task) labelServiceAccounts(client k8sclient.Client, serviceAccounts Ser
 }
 
 // Add label to ImageStreeams
-func (t *Task) labelImageStreams(client compat.Client, itemsUpdated int) (int, error) {
-	for _, ns := range t.sourceNamespaces() {
-		imageStreamList := imagev1.ImageStreamList{}
-		options := k8sclient.InNamespace(ns)
-		err := client.List(context.TODO(), &imageStreamList, options)
-		if err != nil {
-			log.Trace(err)
-			return itemsUpdated, err
-		}
-		total := len(imageStreamList.Items)
-		for i, is := range imageStreamList.Items {
-			if is.Labels == nil {
-				is.Labels = map[string]string{}
-			}
-			if is.Labels[migapi.IncludedInStageBackupLabel] == t.UID() {
-				continue
-			}
-			is.Labels[migapi.IncludedInStageBackupLabel] = t.UID()
-
-			log.Info("Adding labels to source cluster ImageStream.",
-				"imageStream", path.Join(is.Namespace, is.Name))
-			err = client.Update(context.Background(), &is)
-			if err != nil {
-				return itemsUpdated, liberr.Wrap(err)
-			}
-			itemsUpdated++
-			if itemsUpdated > AnnotationsPerReconcile {
-				t.setProgress([]string{fmt.Sprintf("%v/%v ImageStream labels added. in the namespace: %s", i, total, is.Namespace)})
-				return itemsUpdated, nil
-			}
-		}
-	}
-
-	return itemsUpdated, nil
-}
+//func (t *Task) labelImageStreams(client compat.Client, itemsUpdated int) (int, error) {
+//	for _, ns := range t.sourceNamespaces() {
+//		imageStreamList := imagev1.ImageStreamList{}
+//		options := k8sclient.InNamespace(ns)
+//		err := client.List(context.TODO(), &imageStreamList, options)
+//		if err != nil {
+//			log.Trace(err)
+//			return itemsUpdated, err
+//		}
+//		total := len(imageStreamList.Items)
+//		for i, is := range imageStreamList.Items {
+//			if is.Labels == nil {
+//				is.Labels = map[string]string{}
+//			}
+//			if is.Labels[migapi.IncludedInStageBackupLabel] == t.UID() {
+//				continue
+//			}
+//			is.Labels[migapi.IncludedInStageBackupLabel] = t.UID()
+//
+//			log.Info("Adding labels to source cluster ImageStream.",
+//				"imageStream", path.Join(is.Namespace, is.Name))
+//			err = client.Update(context.Background(), &is)
+//			if err != nil {
+//				return itemsUpdated, liberr.Wrap(err)
+//			}
+//			itemsUpdated++
+//			if itemsUpdated > AnnotationsPerReconcile {
+//				t.setProgress([]string{fmt.Sprintf("%v/%v ImageStream labels added. in the namespace: %s", i, total, is.Namespace)})
+//				return itemsUpdated, nil
+//			}
+//		}
+//	}
+//
+//	return itemsUpdated, nil
+//}
 
 // Delete temporary annotations and labels added.
 func (t *Task) deleteAnnotations() error {
@@ -426,10 +424,10 @@ func (t *Task) deleteAnnotations() error {
 		if err != nil {
 			return liberr.Wrap(err)
 		}
-		err = t.deleteImageStreamLabels(client, namespaceList[i])
-		if err != nil {
-			return liberr.Wrap(err)
-		}
+		//err = t.deleteImageStreamLabels(client, namespaceList[i])
+		//if err != nil {
+		//	return liberr.Wrap(err)
+		//}
 	}
 
 	return nil
@@ -606,24 +604,24 @@ func (t *Task) deleteServiceAccountLabels(client k8sclient.Client) error {
 }
 
 // Delete ImageStream labels
-func (t *Task) deleteImageStreamLabels(client k8sclient.Client, namespaceList []string) error {
-	labels := map[string]string{
-		migapi.IncludedInStageBackupLabel: t.UID(),
-	}
-	options := k8sclient.MatchingLabels(labels)
-	imageStreamList := imagev1.ImageStreamList{}
-	err := client.List(context.TODO(), &imageStreamList, options)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
-	for _, is := range imageStreamList.Items {
-		delete(is.Labels, migapi.IncludedInStageBackupLabel)
-		err = client.Update(context.Background(), &is)
-		if err != nil {
-			return liberr.Wrap(err)
-		}
-		log.Info("Velero Annotations/Labels removed on ImageStream.",
-			"imageStream", path.Join(is.Namespace, is.Name))
-	}
-	return nil
-}
+//func (t *Task) deleteImageStreamLabels(client k8sclient.Client, namespaceList []string) error {
+//	labels := map[string]string{
+//		migapi.IncludedInStageBackupLabel: t.UID(),
+//	}
+//	options := k8sclient.MatchingLabels(labels)
+//	imageStreamList := imagev1.ImageStreamList{}
+//	err := client.List(context.TODO(), &imageStreamList, options)
+//	if err != nil {
+//		return liberr.Wrap(err)
+//	}
+//	for _, is := range imageStreamList.Items {
+//		delete(is.Labels, migapi.IncludedInStageBackupLabel)
+//		err = client.Update(context.Background(), &is)
+//		if err != nil {
+//			return liberr.Wrap(err)
+//		}
+//		log.Info("Velero Annotations/Labels removed on ImageStream.",
+//			"imageStream", path.Join(is.Namespace, is.Name))
+//	}
+//	return nil
+//}

@@ -1,0 +1,38 @@
+apiVersion: migration.openshift.io/v1alpha1
+kind: MigPlan
+metadata:
+  name: migplan-example
+  namespace: openshift-migration
+spec:
+  destMigClusterRef:
+    name: host
+    namespace: openshift-migration
+  indirectImageMigration: true
+  indirectVolumeMigration: true
+  migStorageRef:
+    name: gcp-bucket
+    namespace: openshift-migration
+  namespaces:
+    - cluster-migrate-test-app
+  persistentVolumes:
+    - capacity: 5Gi
+      name: pvc-eb66ccb3-82cf-4516-a3bd-650799301fdc
+      pvc:
+        accessModes:
+          - ReadWriteOnce
+        hasReference: true
+        name: pod-demo
+        namespace: cluster-migrate-test-app
+      selection:
+        action: copy
+        copyMethod: filesystem
+        storageClass: standard
+      storageClass: csi-sc-viettelplugin-ssd
+      supported:
+        actions:
+          - copy
+        copyMethods:
+          - filesystem
+  srcMigClusterRef:
+    name: source-cluster
+    namespace: openshift-migration

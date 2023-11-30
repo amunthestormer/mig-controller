@@ -1,0 +1,12 @@
+apiVersion: migration.openshift.io/v1alpha1
+kind: MigStorage
+metadata:
+  name: gcp-bucket
+  namespace: openshift-migration
+spec:
+  backupStorageConfig:
+    gcpBucket: amun
+    credsSecretRef:
+      name: gcp-bucket-credential
+      namespace: openshift-migration
+  backupStorageProvider: gcp

@@ -34,7 +34,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	ocapi "github.com/openshift/api/apps/v1"
 	imgapi "github.com/openshift/api/image/v1"
 	"github.com/openshift/library-go/pkg/image/reference"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
@@ -85,6 +84,12 @@ type MigClusterSpec struct {
 
 	// If the migcluster needs SSL verification for connections a user can supply a custom CA bundle. This field is required only when spec.Insecure is set false
 	CABundle []byte `json:"caBundle,omitempty"`
+
+	//// Client Key for connection. This field is required only when spec.Insecure is set false
+	//ClientKey string `json:"clientKey,omitempty"`
+	//
+	//// CLient Cert for connection. This field is required only when spec.Insecure is set false
+	//ClientCert string `json:"clientCert,omitempty"`
 
 	// For azure clusters -- it's the resource group that in-cluster volumes use.
 	AzureResourceGroup string `json:"azureResourceGroup,omitempty"`
@@ -412,11 +417,9 @@ func (m *MigCluster) TestConnection(c k8sclient.Client, timeout time.Duration) e
 		return err
 	}
 	restConfig.Timeout = timeout
-	_, err = k8sclient.New(restConfig, k8sclient.Options{Scheme: scheme.Scheme})
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -436,7 +439,17 @@ func (m *MigCluster) BuildRestConfig(c k8sclient.Client) (*rest.Config, error) {
 	if m.Spec.Insecure {
 		tlsClientConfig = rest.TLSClientConfig{Insecure: true}
 	} else {
+		//clientCert, err := json.Marshal(m.Spec.ClientCert)
+		//if err != nil {
+		//	klog.Errorf("Mig-cluster Client Cert Error %v", err)
+		//}
+		//clientKey, err := json.Marshal(m.Spec.ClientKey)
+		//if err != nil {
+		//	klog.Errorf("Mig-cluster Client Key Error %v", err)
+		//}
+		//tlsClientConfig = rest.TLSClientConfig{Insecure: false, CAData: m.Spec.CABundle, CertData: clientCert, KeyData: clientKey}
 		tlsClientConfig = rest.TLSClientConfig{Insecure: false, CAData: m.Spec.CABundle}
+
 	}
 	restConfig := &rest.Config{
 		Host:            m.Spec.URL,
@@ -488,17 +501,17 @@ func (m *MigCluster) DeleteResources(client k8sclient.Client, labels map[string]
 	}
 
 	// DeploymentConfig
-	dcList := ocapi.DeploymentConfigList{}
-	err = client.List(context.TODO(), &dcList, options)
-	if err != nil {
-		return err
-	}
-	for _, r := range dcList.Items {
-		err = client.Delete(context.TODO(), &r)
-		if err != nil && !k8serror.IsNotFound(err) {
-			return err
-		}
-	}
+	//dcList := ocapi.DeploymentConfigList{}
+	//err = client.List(context.TODO(), &dcList, options)
+	//if err != nil {
+	//	return err
+	//}
+	//for _, r := range dcList.Items {
+	//	err = client.Delete(context.TODO(), &r)
+	//	if err != nil && !k8serror.IsNotFound(err) {
+	//		return err
+	//	}
+	//}
 
 	// Service
 	svList := kapi.ServiceList{}
@@ -540,17 +553,17 @@ func (m *MigCluster) DeleteResources(client k8sclient.Client, labels map[string]
 	}
 
 	// ImageStream
-	iList := imgapi.ImageStreamList{}
-	err = client.List(context.TODO(), &iList, options)
-	if err != nil {
-		return err
-	}
-	for _, r := range iList.Items {
-		err = client.Delete(context.TODO(), &r)
-		if err != nil && !k8serror.IsNotFound(err) {
-			return err
-		}
-	}
+	//iList := imgapi.ImageStreamList{}
+	//err = client.List(context.TODO(), &iList, options)
+	//if err != nil {
+	//	return err
+	//}
+	//for _, r := range iList.Items {
+	//	err = client.Delete(context.TODO(), &r)
+	//	if err != nil && !k8serror.IsNotFound(err) {
+	//		return err
+	//	}
+	//}
 
 	// Backup
 	bList := velero.BackupList{}

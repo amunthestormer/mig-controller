@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"context"
+	"k8s.io/klog"
 	"strconv"
 
 	liberr "github.com/konveyor/controller/pkg/error"
@@ -107,6 +108,7 @@ func GetCluster(client k8sclient.Client, ref *kapi.ObjectReference) (*MigCluster
 		},
 		&object)
 	if err != nil {
+		klog.Infof("GetCluster: %v", err)
 		if errors.IsNotFound(err) {
 			return nil, nil
 		} else {
@@ -227,7 +229,6 @@ func GetSecret(client k8sclient.Client, ref *kapi.ObjectReference) (*kapi.Secret
 			return nil, err
 		}
 	}
-
 	return &object, err
 }
 

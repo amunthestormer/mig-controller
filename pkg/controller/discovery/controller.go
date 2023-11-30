@@ -150,9 +150,9 @@ func (r *ReconcileDiscovery) Reconcile(ctx context.Context, request reconcile.Re
 		log.Trace(err)
 		return reQueue, nil
 	}
-	if !r.IsValid(cluster) {
-		return reconcile.Result{Requeue: false}, nil
-	}
+	//if !r.IsValid(cluster) {
+	//	return reconcile.Result{Requeue: false}, nil
+	//}
 	collections := []container.Collection{
 		&container.Backup{},
 		&container.Restore{},
@@ -160,7 +160,7 @@ func (r *ReconcileDiscovery) Reconcile(ctx context.Context, request reconcile.Re
 		&container.PodVolumeRestore{},
 		&container.Namespace{},
 		&container.Service{},
-		&container.Route{},
+		//&container.Route{},
 		&container.PVC{},
 		&container.Pod{},
 		&container.Job{},

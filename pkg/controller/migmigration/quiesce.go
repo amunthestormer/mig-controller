@@ -30,10 +30,10 @@ func (t *Task) quiesceApplications() error {
 	if err != nil {
 		return liberr.Wrap(err)
 	}
-	err = t.quiesceDeploymentConfigs(client)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//err = t.quiesceDeploymentConfigs(client)
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 	err = t.quiesceDeployments(client)
 	if err != nil {
 		return liberr.Wrap(err)
@@ -90,10 +90,10 @@ func (t *Task) unQuiesceApplications(client compat.Client, namespaces []string) 
 	if err != nil {
 		return liberr.Wrap(err)
 	}
-	err = t.unQuiesceDeploymentConfigs(client, namespaces)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//err = t.unQuiesceDeploymentConfigs(client, namespaces)
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 	err = t.unQuiesceDeployments(client, namespaces)
 	if err != nil {
 		return liberr.Wrap(err)

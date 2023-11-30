@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"k8s.io/klog"
 	"net/http"
 	"net/url"
 	"path"
@@ -72,36 +73,39 @@ func (r ReconcileMigCluster) validate(ctx context.Context, cluster *migapi.MigCl
 	if err != nil {
 		return liberr.Wrap(err)
 	}
-
+	klog.Info("URL validated")
 	// SA secret
 	err = r.validateSaSecret(ctx, cluster)
 	if err != nil {
 		return liberr.Wrap(err)
 	}
+	klog.Info("SaSecret validated")
 
 	// Test Connection
 	err = r.testConnection(ctx, cluster)
 	if err != nil {
 		return liberr.Wrap(err)
 	}
+	klog.Info("testConnection validated")
 
 	// Token privileges
 	err = r.validateSaTokenPrivileges(ctx, cluster)
 	if err != nil {
 		return liberr.Wrap(err)
 	}
+	klog.Info("Token Privileges validated")
 
-	// Exposed registry route
-	err = r.validateRegistryRoute(ctx, cluster)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//// Exposed registry route
+	//err = r.validateRegistryRoute(ctx, cluster)
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 
-	// cluster version
-	err = r.validateOperatorVersionMatchesHost(ctx, cluster)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//// cluster version
+	//err = r.validateOperatorVersionMatchesHost(ctx, cluster)
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 
 	return nil
 }
@@ -385,16 +389,16 @@ func (r *ReconcileMigCluster) validateSaTokenPrivileges(ctx context.Context, clu
 	// check for access to all verbs on all resources in all namespaces
 	// in the migration.openshift.io and velero.io groups in order to
 	// determine if the service account has sufficient permissions
-	migrationSar := auth.SelfSubjectAccessReview{
-		Spec: auth.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &auth.ResourceAttributes{
-				Group:    "migration.openshift.io",
-				Resource: "*",
-				Verb:     "*",
-				Version:  "*",
-			},
-		},
-	}
+	//migrationSar := auth.SelfSubjectAccessReview{
+	//	Spec: auth.SelfSubjectAccessReviewSpec{
+	//		ResourceAttributes: &auth.ResourceAttributes{
+	//			Group:    "migration.openshift.io",
+	//			Resource: "*",
+	//			Verb:     "*",
+	//			Version:  "*",
+	//		},
+	//	},
+	//}
 
 	veleroSar := auth.SelfSubjectAccessReview{
 		Spec: auth.SelfSubjectAccessReviewSpec{
@@ -411,16 +415,17 @@ func (r *ReconcileMigCluster) validateSaTokenPrivileges(ctx context.Context, clu
 	if err != nil {
 		return liberr.Wrap(err)
 	}
-	err = client.Create(context.TODO(), &migrationSar)
-	if err != nil {
-		return liberr.Wrap(err)
-	}
+	//err = client.Create(context.TODO(), &migrationSar)
+	//if err != nil {
+	//	return liberr.Wrap(err)
+	//}
 	err = client.Create(context.TODO(), &veleroSar)
 	if err != nil {
 		return liberr.Wrap(err)
 	}
 
-	if !migrationSar.Status.Allowed || !veleroSar.Status.Allowed {
+	//if !migrationSar.Status.Allowed || !veleroSar.Status.Allowed {
+	if !veleroSar.Status.Allowed {
 		cluster.Status.SetCondition(migapi.Condition{
 			Type:     SaTokenNotPrivileged,
 			Status:   True,

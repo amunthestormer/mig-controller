@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"k8s.io/klog"
 	"time"
 
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
@@ -93,6 +94,7 @@ func (r *DataSource) Start(cluster *migapi.MigCluster) error {
 	}
 	mark := time.Now()
 	err = r.buildClient(cluster)
+	klog.Info("DataSource New Client is built")
 	if err != nil {
 		Log.Trace(err)
 		return err
@@ -202,15 +204,18 @@ func (r *DataSource) buildClient(cluster *migapi.MigCluster) error {
 	var err error
 	r.RestCfg, err = cluster.BuildRestConfig(r.Container.Client)
 	if err != nil {
+		klog.Infof("BuildClient BuildRestConfig: %v", err)
 		Log.Trace(err)
 		return err
 	}
+
 	r.Client, err = client.New(
 		r.RestCfg,
 		client.Options{
 			Scheme: scheme.Scheme,
 		})
 	if err != nil {
+		klog.Infof("BuildClient NewClient: %v", err)
 		Log.Trace(err)
 		return err
 	}
