@@ -197,7 +197,7 @@ replace k8s.io/apiserver => k8s.io/apiserver v0.22.14
 // Use fork
 replace bitbucket.org/ww/goautoneg v0.0.0-20120707110453-75cd24fc2f2c => github.com/markusthoemmes/goautoneg v0.0.0-20190713162725-c6008fefa5b1
 
-replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v1.10.2-0.20220124204642-f91d69bb9a5e
+replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v0.10.2-0.20220124204642-f91d69bb9a5e
 
 //k8s deps pinning
 
