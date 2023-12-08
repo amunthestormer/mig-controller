@@ -5,8 +5,8 @@ metadata:
   namespace: openshift-migration
 spec:
   backupStorageConfig:
-    gcpBucket: amun
+    gcpBucket: mig-controller-demo
     credsSecretRef:
-      name: gcp-bucket-credential
-      namespace: openshift-migration
+      name: gcp-credentials
+      namespace: openshift-config
   backupStorageProvider: gcp

@@ -3,6 +3,7 @@ package migmigration
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"path"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	imagev1 "github.com/openshift/api/image/v1"
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -25,47 +25,47 @@ var NoReQ = time.Duration(0)
 
 // Phases
 const (
-	Created                         = ""
-	Started                         = "Started"
-	CleanStaleAnnotations           = "CleanStaleAnnotations"
-	CleanStaleVeleroCRs             = "CleanStaleVeleroCRs"
-	CleanStaleResticCRs             = "CleanStaleResticCRs"
-	CleanStaleStagePods             = "CleanStaleStagePods"
-	WaitForStaleStagePodsTerminated = "WaitForStaleStagePodsTerminated"
-	StartRefresh                    = "StartRefresh"
-	WaitForRefresh                  = "WaitForRefresh"
-	CreateRegistries                = "CreateRegistries"
-	//CreateDirectImageMigration             = "CreateDirectImageMigration"
-	//WaitForDirectImageMigrationToComplete  = "WaitForDirectImageMigrationToComplete"
-	EnsureCloudSecretPropagated     = "EnsureCloudSecretPropagated"
-	PreBackupHooks                  = "PreBackupHooks"
-	PostBackupHooks                 = "PostBackupHooks"
-	PreRestoreHooks                 = "PreRestoreHooks"
-	PostRestoreHooks                = "PostRestoreHooks"
-	PreBackupHooksFailed            = "PreBackupHooksFailed"
-	PostBackupHooksFailed           = "PostBackupHooksFailed"
-	PreRestoreHooksFailed           = "PreRestoreHooksFailed"
-	PostRestoreHooksFailed          = "PostRestoreHooksFailed"
-	EnsureInitialBackup             = "EnsureInitialBackup"
-	InitialBackupCreated            = "InitialBackupCreated"
-	InitialBackupFailed             = "InitialBackupFailed"
-	AnnotateResources               = "AnnotateResources"
-	EnsureStagePodsFromRunning      = "EnsureStagePodsFromRunning"
-	EnsureStagePodsFromTemplates    = "EnsureStagePodsFromTemplates"
-	EnsureStagePodsFromOrphanedPVCs = "EnsureStagePodsFromOrphanedPVCs"
-	StagePodsCreated                = "StagePodsCreated"
-	StagePodsFailed                 = "StagePodsFailed"
-	SourceStagePodsFailed           = "SourceStagePodsFailed"
-	RestartVelero                   = "RestartVelero"
-	WaitForVeleroReady              = "WaitForVeleroReady"
-	RestartRestic                   = "RestartRestic"
-	WaitForResticReady              = "WaitForResticReady"
-	QuiesceApplications             = "QuiesceApplications"
-	EnsureQuiesced                  = "EnsureQuiesced"
-	UnQuiesceSrcApplications        = "UnQuiesceSrcApplications"
-	UnQuiesceDestApplications       = "UnQuiesceDestApplications"
-	SwapPVCReferences               = "SwapPVCReferences"
-	//WaitForRegistriesReady                 = "WaitForRegistriesReady"
+	Created                                = ""
+	Started                                = "Started"
+	CleanStaleAnnotations                  = "CleanStaleAnnotations"
+	CleanStaleVeleroCRs                    = "CleanStaleVeleroCRs"
+	CleanStaleResticCRs                    = "CleanStaleResticCRs"
+	CleanStaleStagePods                    = "CleanStaleStagePods"
+	WaitForStaleStagePodsTerminated        = "WaitForStaleStagePodsTerminated"
+	StartRefresh                           = "StartRefresh"
+	WaitForRefresh                         = "WaitForRefresh"
+	CreateRegistries                       = "CreateRegistries"
+	CreateDirectImageMigration             = "CreateDirectImageMigration"
+	WaitForDirectImageMigrationToComplete  = "WaitForDirectImageMigrationToComplete"
+	EnsureCloudSecretPropagated            = "EnsureCloudSecretPropagated"
+	PreBackupHooks                         = "PreBackupHooks"
+	PostBackupHooks                        = "PostBackupHooks"
+	PreRestoreHooks                        = "PreRestoreHooks"
+	PostRestoreHooks                       = "PostRestoreHooks"
+	PreBackupHooksFailed                   = "PreBackupHooksFailed"
+	PostBackupHooksFailed                  = "PostBackupHooksFailed"
+	PreRestoreHooksFailed                  = "PreRestoreHooksFailed"
+	PostRestoreHooksFailed                 = "PostRestoreHooksFailed"
+	EnsureInitialBackup                    = "EnsureInitialBackup"
+	InitialBackupCreated                   = "InitialBackupCreated"
+	InitialBackupFailed                    = "InitialBackupFailed"
+	AnnotateResources                      = "AnnotateResources"
+	EnsureStagePodsFromRunning             = "EnsureStagePodsFromRunning"
+	EnsureStagePodsFromTemplates           = "EnsureStagePodsFromTemplates"
+	EnsureStagePodsFromOrphanedPVCs        = "EnsureStagePodsFromOrphanedPVCs"
+	StagePodsCreated                       = "StagePodsCreated"
+	StagePodsFailed                        = "StagePodsFailed"
+	SourceStagePodsFailed                  = "SourceStagePodsFailed"
+	RestartVelero                          = "RestartVelero"
+	WaitForVeleroReady                     = "WaitForVeleroReady"
+	RestartRestic                          = "RestartRestic"
+	WaitForResticReady                     = "WaitForResticReady"
+	QuiesceApplications                    = "QuiesceApplications"
+	EnsureQuiesced                         = "EnsureQuiesced"
+	UnQuiesceSrcApplications               = "UnQuiesceSrcApplications"
+	UnQuiesceDestApplications              = "UnQuiesceDestApplications"
+	SwapPVCReferences                      = "SwapPVCReferences"
+	WaitForRegistriesReady                 = "WaitForRegistriesReady"
 	EnsureStageBackup                      = "EnsureStageBackup"
 	StageBackupCreated                     = "StageBackupCreated"
 	StageBackupFailed                      = "StageBackupFailed"
@@ -85,33 +85,33 @@ const (
 	EnsureStagePodsTerminated              = "EnsureStagePodsTerminated"
 	EnsureAnnotationsDeleted               = "EnsureAnnotationsDeleted"
 	EnsureMigratedDeleted                  = "EnsureMigratedDeleted"
-	//DeleteRegistries                       = "DeleteRegistries"
-	DeleteMigrated                       = "DeleteMigrated"
-	DeleteBackups                        = "DeleteBackups"
-	DeleteRestores                       = "DeleteRestores"
-	DeleteHookJobs                       = "DeleteHookJobs"
-	DeleteDirectVolumeMigrationResources = "DeleteDirectVolumeMigrationResources"
-	//DeleteDirectImageMigrationResources    = "DeleteDirectImageMigrationResources"
-	MigrationFailed = "MigrationFailed"
-	Canceling       = "Canceling"
-	Canceled        = "Canceled"
-	Rollback        = "Rollback"
-	Completed       = "Completed"
+	DeleteRegistries                       = "DeleteRegistries"
+	DeleteMigrated                         = "DeleteMigrated"
+	DeleteBackups                          = "DeleteBackups"
+	DeleteRestores                         = "DeleteRestores"
+	DeleteHookJobs                         = "DeleteHookJobs"
+	DeleteDirectVolumeMigrationResources   = "DeleteDirectVolumeMigrationResources"
+	DeleteDirectImageMigrationResources    = "DeleteDirectImageMigrationResources"
+	MigrationFailed                        = "MigrationFailed"
+	Canceling                              = "Canceling"
+	Canceled                               = "Canceled"
+	Rollback                               = "Rollback"
+	Completed                              = "Completed"
 )
 
 // Flags
 const (
-	Quiesce      = 0x001 // Only when QuiescePods (true).
-	HasStagePods = 0x002 // Only when stage pods created.
-	HasPVs       = 0x004 // Only when PVs migrated.
-	HasVerify    = 0x008 // Only when the plan has enabled verification
-	HasISs       = 0x010 // Only when ISs migrated
-	//DirectImage         = 0x020   // Only when using direct image migration
-	//IndirectImage       = 0x040   // Only when using indirect image migration
-	DirectVolume   = 0x080 // Only when using direct volume migration
-	IndirectVolume = 0x100 // Only when using indirect volume migration
-	HasStageBackup = 0x200 // True when stage backup is needed
-	//EnableImage         = 0x400   // True when disable_image_migration is unset
+	Quiesce             = 0x001   // Only when QuiescePods (true).
+	HasStagePods        = 0x002   // Only when stage pods created.
+	HasPVs              = 0x004   // Only when PVs migrated.
+	HasVerify           = 0x008   // Only when the plan has enabled verification
+	HasISs              = 0x010   // Only when ISs migrated
+	DirectImage         = 0x020   // Only when using direct image migration
+	IndirectImage       = 0x040   // Only when using indirect image migration
+	DirectVolume        = 0x080   // Only when using direct volume migration
+	IndirectVolume      = 0x100   // Only when using indirect volume migration
+	HasStageBackup      = 0x200   // True when stage backup is needed
+	EnableImage         = 0x400   // True when disable_image_migration is unset
 	EnableVolume        = 0x800   // True when disable_volume is unset
 	HasPreBackupHooks   = 0x1000  // True when prebackup hooks exist
 	HasPostBackupHooks  = 0x2000  // True when postbackup hooks exist
@@ -122,8 +122,8 @@ const (
 
 // Migration steps
 const (
-	StepPrepare = "Prepare"
-	//StepDirectImage      = "DirectImage"
+	StepPrepare          = "Prepare"
+	StepDirectImage      = "DirectImage"
 	StepDirectVolume     = "DirectVolume"
 	StepBackup           = "Backup"
 	StepStageBackup      = "StageBackup"
@@ -159,7 +159,7 @@ var StageItinerary = Itinerary{
 		//{Name: CreateDirectImageMigration, Step: StepStageBackup, all: DirectImage | EnableImage},
 		{Name: QuiesceApplications, Step: StepStageBackup, all: Quiesce},
 		{Name: EnsureQuiesced, Step: StepStageBackup, all: Quiesce},
-		{Name: CreateDirectVolumeMigration, Step: StepStageBackup, all: DirectVolume | EnableVolume},
+		//{Name: CreateDirectVolumeMigration, Step: StepStageBackup, all: DirectVolume | EnableVolume},
 		{Name: EnsureStagePodsFromRunning, Step: StepStageBackup, all: HasPVs | IndirectVolume},
 		{Name: EnsureStagePodsFromTemplates, Step: StepStageBackup, all: HasPVs | IndirectVolume},
 		{Name: EnsureStagePodsFromOrphanedPVCs, Step: StepStageBackup, all: HasPVs | IndirectVolume},
@@ -176,7 +176,7 @@ var StageItinerary = Itinerary{
 		{Name: EnsureStageRestore, Step: StepStageRestore, all: HasStageBackup},
 		{Name: StageRestoreCreated, Step: StepStageRestore, all: HasStageBackup},
 		//{Name: WaitForDirectImageMigrationToComplete, Step: StepDirectImage, all: DirectImage | EnableImage},
-		{Name: WaitForDirectVolumeMigrationToComplete, Step: StepDirectVolume, all: DirectVolume | EnableVolume},
+		//{Name: WaitForDirectVolumeMigrationToComplete, Step: StepDirectVolume, all: DirectVolume | EnableVolume},
 		{Name: SwapPVCReferences, Step: StepCleanup, all: StorageConversion | Quiesce},
 		//{Name: DeleteRegistries, Step: StepCleanup},
 		{Name: EnsureStagePodsDeleted, Step: StepCleanup, all: HasStagePods},
@@ -216,7 +216,7 @@ var FinalItinerary = Itinerary{
 		{Name: RestartRestic, Step: StepStageBackup, all: HasStagePods},
 		{Name: AnnotateResources, Step: StepStageBackup, all: HasStageBackup},
 		{Name: WaitForResticReady, Step: StepStageBackup, any: HasPVs | HasStagePods},
-		{Name: CreateDirectVolumeMigration, Step: StepStageBackup, all: DirectVolume | EnableVolume},
+		//{Name: CreateDirectVolumeMigration, Step: StepStageBackup, all: DirectVolume | EnableVolume},
 		{Name: EnsureStageBackup, Step: StepStageBackup, all: HasStageBackup},
 		{Name: StageBackupCreated, Step: StepStageBackup, all: HasStageBackup},
 		{Name: EnsureStageBackupReplicated, Step: StepStageBackup, all: HasStageBackup},
@@ -226,7 +226,7 @@ var FinalItinerary = Itinerary{
 		{Name: EnsureStagePodsTerminated, Step: StepStageRestore, all: HasStagePods},
 		{Name: EnsureAnnotationsDeleted, Step: StepStageRestore, all: HasStageBackup},
 		//{Name: WaitForDirectImageMigrationToComplete, Step: StepDirectImage, all: DirectImage | EnableImage},
-		{Name: WaitForDirectVolumeMigrationToComplete, Step: StepDirectVolume, all: DirectVolume | EnableVolume},
+		//{Name: WaitForDirectVolumeMigrationToComplete, Step: StepDirectVolume, all: DirectVolume | EnableVolume},
 		{Name: PostBackupHooks, Step: PostBackupHooks, all: HasPostBackupHooks},
 		{Name: PreRestoreHooks, Step: PreRestoreHooks, all: HasPreRestoreHooks},
 		{Name: EnsureInitialBackupReplicated, Step: StepRestore},
@@ -249,7 +249,7 @@ var CancelItinerary = Itinerary{
 		{Name: DeleteRestores, Step: StepCleanupVelero},
 		//{Name: DeleteRegistries, Step: StepCleanupHelpers},
 		{Name: DeleteHookJobs, Step: StepCleanupHelpers},
-		{Name: DeleteDirectVolumeMigrationResources, Step: StepCleanupHelpers, all: DirectVolume},
+		//{Name: DeleteDirectVolumeMigrationResources, Step: StepCleanupHelpers, all: DirectVolume},
 		//{Name: DeleteDirectImageMigrationResources, Step: StepCleanupHelpers, all: DirectImage},
 		{Name: EnsureStagePodsDeleted, Step: StepCleanupHelpers, all: HasStagePods},
 		{Name: EnsureAnnotationsDeleted, Step: StepCleanupHelpers, all: HasStageBackup},
@@ -410,90 +410,92 @@ func (t *Task) Run(ctx context.Context) error {
 		if err = t.next(); err != nil {
 			return liberr.Wrap(err)
 		}
-	//case CreateRegistries:
-	//	nEnsured, err := t.ensureMigRegistries()
-	//	if err != nil {
-	//		return liberr.Wrap(err)
-	//	}
-	//	if nEnsured == 2 {
-	//		if err = t.next(); err != nil {
-	//			return liberr.Wrap(err)
-	//		}
-	//	} else {
-	//		t.Log.Info(fmt.Sprintf("Created [%v/2] registries, retrying.", nEnsured))
-	//	}
-	//case WaitForRegistriesReady:
-	//	// First registry health check happens here
-	//	// After this, registry health is continuously checked in validation.go
-	//	nEnsured, message, err := ensureRegistryHealth(t.Client, t.Owner)
-	//	if err != nil {
-	//		if err.Error() == "ImagePullBackOff" {
-	//			t.fail(WaitForRegistriesReady, []string{message})
-	//		} else {
-	//			return liberr.Wrap(err)
-	//		}
-	//	}
-	//	if nEnsured == 2 && message == "" {
-	//		setMigRegistryHealthyCondition(t.Owner)
-	//		if err = t.next(); err != nil {
-	//			return liberr.Wrap(err)
-	//		}
-	//	} else {
-	//		t.Log.Info(fmt.Sprintf("Found [%v/2] registries in healthy state. Waiting.", nEnsured))
-	//		t.Requeue = PollReQ
-	//	}
-	//case DeleteRegistries:
-	//	err := t.deleteImageRegistryResources()
-	//	if err != nil {
-	//		return liberr.Wrap(err)
-	//	}
-	//	if err = t.next(); err != nil {
-	//		return liberr.Wrap(err)
-	//	}
-	//case CreateDirectImageMigration:
-	//	// Create the DirectImageMigration CR
-	//	err := t.createDirectImageMigration()
-	//	if err != nil {
-	//		return liberr.Wrap(err)
-	//	}
-	//	if err = t.next(); err != nil {
-	//		return liberr.Wrap(err)
-	//	}
-	//case WaitForDirectImageMigrationToComplete:
-	//	// Get the DirectImageMigration CR
-	//	dim, err := t.getDirectImageMigration()
-	//	if err != nil {
-	//		return liberr.Wrap(err)
-	//	}
-	//	if dim == nil {
-	//		return errors.New("DirectImageMigration not found")
-	//	}
-	//
-	//	completed, reasons, progress := dim.HasCompleted()
-	//	t.setProgress(progress)
-	//	t.Log.Info("Waiting for ImageStream migrations to complete",
-	//		"directImageMigration", path.Join(dim.Namespace, dim.Name),
-	//		"directImageMigrationPhase", dim.Status.Phase,
-	//		"completed", completed)
-	//
-	//	if completed {
-	//		if len(reasons) > 0 {
-	//			t.setDirectImageMigrationWarning(dim)
-	//			t.Log.Info("DirectImageMigration completed with warnings.",
-	//				"directImageMigration", path.Join(dim.Namespace, dim.Name),
-	//				"warnings", reasons)
-	//			// Once supported, add reasons to Status.Warnings for the Step
-	//		}
-	//		if err = t.next(); err != nil {
-	//			return liberr.Wrap(err)
-	//		}
-	//	} else {
-	//		t.Requeue = PollReQ
-	//	}
+	case CreateRegistries:
+		nEnsured, err := t.ensureMigRegistries()
+		if err != nil {
+			return liberr.Wrap(err)
+		}
+		if nEnsured == 2 {
+			if err = t.next(); err != nil {
+				return liberr.Wrap(err)
+			}
+		} else {
+			t.Log.Info(fmt.Sprintf("Created [%v/2] registries, retrying.", nEnsured))
+		}
+	case WaitForRegistriesReady:
+		// First registry health check happens here
+		// After this, registry health is continuously checked in validation.go
+		nEnsured, message, err := ensureRegistryHealth(t.Client, t.Owner)
+		if err != nil {
+			if err.Error() == "ImagePullBackOff" {
+				t.fail(WaitForRegistriesReady, []string{message})
+			} else {
+				return liberr.Wrap(err)
+			}
+		}
+		if nEnsured == 2 && message == "" {
+			setMigRegistryHealthyCondition(t.Owner)
+			if err = t.next(); err != nil {
+				return liberr.Wrap(err)
+			}
+		} else {
+			t.Log.Info(fmt.Sprintf("Found [%v/2] registries in healthy state. Waiting.", nEnsured))
+			t.Requeue = PollReQ
+		}
+	case DeleteRegistries:
+		err := t.deleteImageRegistryResources()
+		if err != nil {
+			return liberr.Wrap(err)
+		}
+		if err = t.next(); err != nil {
+			return liberr.Wrap(err)
+		}
+	case CreateDirectImageMigration:
+		// Create the DirectImageMigration CR
+		err := t.createDirectImageMigration()
+		if err != nil {
+			return liberr.Wrap(err)
+		}
+		if err = t.next(); err != nil {
+			return liberr.Wrap(err)
+		}
+	case WaitForDirectImageMigrationToComplete:
+		// Get the DirectImageMigration CR
+		dim, err := t.getDirectImageMigration()
+		if err != nil {
+			return liberr.Wrap(err)
+		}
+		if dim == nil {
+			return errors.New("DirectImageMigration not found")
+		}
+
+		completed, reasons, progress := dim.HasCompleted()
+		t.setProgress(progress)
+		t.Log.Info("Waiting for ImageStream migrations to complete",
+			"directImageMigration", path.Join(dim.Namespace, dim.Name),
+			"directImageMigrationPhase", dim.Status.Phase,
+			"completed", completed)
+
+		if completed {
+			if len(reasons) > 0 {
+				t.setDirectImageMigrationWarning(dim)
+				t.Log.Info("DirectImageMigration completed with warnings.",
+					"directImageMigration", path.Join(dim.Namespace, dim.Name),
+					"warnings", reasons)
+				// Once supported, add reasons to Status.Warnings for the Step
+			}
+			if err = t.next(); err != nil {
+				return liberr.Wrap(err)
+			}
+		} else {
+			t.Requeue = PollReQ
+		}
 	case EnsureCloudSecretPropagated:
 		count := 0
 		for _, cluster := range t.getBothClusters() {
-			propagated, err := t.veleroPodCredSecretPropagated(cluster)
+			//propagated, err := t.veleroPodCredSecretPropagated(cluster)
+			propagated, err := t.veleroCloudSecret(cluster)
+
 			if err != nil {
 				return liberr.Wrap(err)
 			}
@@ -1095,14 +1097,14 @@ func (t *Task) Run(ctx context.Context) error {
 		if err = t.next(); err != nil {
 			return liberr.Wrap(err)
 		}
-	//case DeleteDirectImageMigrationResources:
-	//	// Delete all DIM Resources created on the destination cluster
-	//	if err := t.deleteDirectImageMigrationResources(); err != nil {
-	//		return liberr.Wrap(err)
-	//	}
-	//	if err = t.next(); err != nil {
-	//		return liberr.Wrap(err)
-	//	}
+	case DeleteDirectImageMigrationResources:
+		// Delete all DIM Resources created on the destination cluster
+		if err := t.deleteDirectImageMigrationResources(); err != nil {
+			return liberr.Wrap(err)
+		}
+		if err = t.next(); err != nil {
+			return liberr.Wrap(err)
+		}
 	case Canceled:
 		t.Owner.Status.DeleteCondition(Canceling)
 		t.Owner.Status.SetCondition(migapi.Condition{
@@ -1159,13 +1161,14 @@ func (t *Task) init() error {
 	}
 
 	if t.stage() && !t.Owner.Status.HasCondition(StageNoOp) {
-		hasImageStreams, err := t.hasImageStreams()
-		if err != nil {
-			return err
-		}
+		//hasImageStreams, err := t.hasImageStreams()
+		//if err != nil {
+		//	return err
+		//}
 
 		anyPVs, _ := t.hasPVs()
-		if !anyPVs && !hasImageStreams {
+		//if !anyPVs && !hasImageStreams {
+		if !anyPVs {
 			t.Owner.Status.SetCondition(migapi.Condition{
 				Type:     StageNoOp,
 				Status:   True,
@@ -1238,9 +1241,9 @@ func (t *Task) updatePipeline() {
 	if currentStep != nil {
 		currentStep.MarkStarted()
 		currentStep.Phase = t.Phase
-		if currentStep.Name == StepDirectVolume {
-			return
-		}
+		//if currentStep.Name == StepDirectVolume {
+		//	return
+		//}
 		if desc, found := PhaseDescriptions[t.Phase]; found {
 			currentStep.Message = desc
 		} else {
@@ -1334,36 +1337,36 @@ func (t *Task) allFlags(phase Phase) (bool, error) {
 	if phase.all&HasVerify != 0 && !t.hasVerify() {
 		return false, nil
 	}
-	//if phase.all&HasISs != 0 {
-	//	hasImageStream, err := t.hasImageStreams()
-	//	if err != nil {
-	//		return false, liberr.Wrap(err)
-	//	}
-	//	if !hasImageStream {
-	//		return false, nil
-	//	}
-	//}
-	//if phase.all&DirectImage != 0 && !t.directImageMigration() {
-	//	return false, nil
-	//}
-	//if phase.all&IndirectImage != 0 && !t.indirectImageMigration() {
-	//	return false, nil
-	//}
-	//if phase.all&EnableImage != 0 && t.PlanResources.MigPlan.IsImageMigrationDisabled() {
-	//	return false, nil
-	//}
-	//if phase.all&EnableImage != 0 && (t.migrateState() || t.isStorageConversionOrStateMigration()) {
-	//	return false, nil
-	//}
-	//if phase.all&EnableImage != 0 {
-	//	isIntraCluster, err := t.PlanResources.MigPlan.IsIntraCluster(t.Client)
-	//	if err != nil {
-	//		return false, liberr.Wrap(err)
-	//	}
-	//	if isIntraCluster {
-	//		return false, nil
-	//	}
-	//}
+	if phase.all&HasISs != 0 {
+		hasImageStream, err := t.hasImageStreams()
+		if err != nil {
+			return false, liberr.Wrap(err)
+		}
+		if !hasImageStream {
+			return false, nil
+		}
+	}
+	if phase.all&DirectImage != 0 && !t.directImageMigration() {
+		return false, nil
+	}
+	if phase.all&IndirectImage != 0 && !t.indirectImageMigration() {
+		return false, nil
+	}
+	if phase.all&EnableImage != 0 && t.PlanResources.MigPlan.IsImageMigrationDisabled() {
+		return false, nil
+	}
+	if phase.all&EnableImage != 0 && (t.migrateState() || t.isStorageConversionOrStateMigration()) {
+		return false, nil
+	}
+	if phase.all&EnableImage != 0 {
+		isIntraCluster, err := t.PlanResources.MigPlan.IsIntraCluster(t.Client)
+		if err != nil {
+			return false, liberr.Wrap(err)
+		}
+		if isIntraCluster {
+			return false, nil
+		}
+	}
 	if phase.all&DirectVolume != 0 && !t.directVolumeMigration() {
 		return false, nil
 	}

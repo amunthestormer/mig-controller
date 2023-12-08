@@ -31,3 +31,4 @@ migsamples
 tools/tilt/tilt-settings.json
 deployexample/gcp-credentials
 deployexample/sa-secret-remote.yaml
+deployexample/docs

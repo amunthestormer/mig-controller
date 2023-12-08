@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/Azure/azure-sdk-for-go v61.4.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.24
-	github.com/Azure/go-autorest/autorest/adal v0.9.23
+	github.com/Azure/go-autorest/autorest/adal v0.9.18
 	github.com/aws/aws-sdk-go v1.35.23
 	github.com/containers/image/v5 v5.17.0
 	github.com/deckarep/golang-set v1.7.1
@@ -83,7 +83,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
@@ -143,7 +143,7 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
@@ -197,7 +197,7 @@ replace k8s.io/apiserver => k8s.io/apiserver v0.22.14
 // Use fork
 replace bitbucket.org/ww/goautoneg v0.0.0-20120707110453-75cd24fc2f2c => github.com/markusthoemmes/goautoneg v0.0.0-20190713162725-c6008fefa5b1
 
-replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v0.10.2-0.20220124204642-f91d69bb9a5e
+replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v1.10.2-0.20220124204642-f91d69bb9a5e
 
 //k8s deps pinning
 
@@ -210,6 +210,6 @@ replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v0.10.2-0.2
 //openshift deps pinning
 replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190716152234-9ea19f9dd578
 
-replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.9.7
-
 replace vbom.ml/util => github.com/fvbommel/util v0.0.3
+
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.9.7

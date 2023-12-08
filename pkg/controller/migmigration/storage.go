@@ -80,11 +80,11 @@ func (t *Task) swapPVCReferences() (reasons []string, err error) {
 			fmt.Sprintf("Failed updating PVC references on Deployments [%s]", strings.Join(failedDeploymentNames, ",")))
 	}
 	// update pvc refs on deploymentconfigs
-	failedDeploymentConfigNames := t.swapDeploymentConfigPVCRefs(client, mapping)
-	if len(failedDeploymentConfigNames) > 0 {
-		reasons = append(reasons,
-			fmt.Sprintf("Failed updating PVC references on DeploymentConfigs [%s]", strings.Join(failedDeploymentConfigNames, ",")))
-	}
+	//failedDeploymentConfigNames := t.swapDeploymentConfigPVCRefs(client, mapping)
+	//if len(failedDeploymentConfigNames) > 0 {
+	//	reasons = append(reasons,
+	//		fmt.Sprintf("Failed updating PVC references on DeploymentConfigs [%s]", strings.Join(failedDeploymentConfigNames, ",")))
+	//}
 	// update pvc refs on replicasets
 	failedReplicaSetNames := t.swapReplicaSetsPVCRefs(client, mapping)
 	if len(failedReplicaSetNames) > 0 {

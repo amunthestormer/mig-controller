@@ -85,12 +85,6 @@ type MigClusterSpec struct {
 	// If the migcluster needs SSL verification for connections a user can supply a custom CA bundle. This field is required only when spec.Insecure is set false
 	CABundle []byte `json:"caBundle,omitempty"`
 
-	//// Client Key for connection. This field is required only when spec.Insecure is set false
-	//ClientKey string `json:"clientKey,omitempty"`
-	//
-	//// CLient Cert for connection. This field is required only when spec.Insecure is set false
-	//ClientCert string `json:"clientCert,omitempty"`
-
 	// For azure clusters -- it's the resource group that in-cluster volumes use.
 	AzureResourceGroup string `json:"azureResourceGroup,omitempty"`
 
@@ -417,6 +411,7 @@ func (m *MigCluster) TestConnection(c k8sclient.Client, timeout time.Duration) e
 		return err
 	}
 	restConfig.Timeout = timeout
+	_, err = k8sclient.New(restConfig, k8sclient.Options{Scheme: scheme.Scheme})
 	if err != nil {
 		return err
 	}
@@ -439,15 +434,6 @@ func (m *MigCluster) BuildRestConfig(c k8sclient.Client) (*rest.Config, error) {
 	if m.Spec.Insecure {
 		tlsClientConfig = rest.TLSClientConfig{Insecure: true}
 	} else {
-		//clientCert, err := json.Marshal(m.Spec.ClientCert)
-		//if err != nil {
-		//	klog.Errorf("Mig-cluster Client Cert Error %v", err)
-		//}
-		//clientKey, err := json.Marshal(m.Spec.ClientKey)
-		//if err != nil {
-		//	klog.Errorf("Mig-cluster Client Key Error %v", err)
-		//}
-		//tlsClientConfig = rest.TLSClientConfig{Insecure: false, CAData: m.Spec.CABundle, CertData: clientCert, KeyData: clientKey}
 		tlsClientConfig = rest.TLSClientConfig{Insecure: false, CAData: m.Spec.CABundle}
 
 	}

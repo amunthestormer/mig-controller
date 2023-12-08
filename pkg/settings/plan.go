@@ -28,7 +28,6 @@ var IncludedStageResources = mapset.NewSetFromSlice([]interface{}{
 	PVResource,
 	PVCResource,
 	"namespaces",
-	ISResource,
 	"secrets",
 	"configmaps",
 	"pods",
@@ -36,7 +35,6 @@ var IncludedStageResources = mapset.NewSetFromSlice([]interface{}{
 
 // Excluded resource defaults
 var ExcludedInitialResources = mapset.NewSetFromSlice([]interface{}{
-	ISResource,
 	PVResource,
 	PVCResource,
 })

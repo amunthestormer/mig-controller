@@ -468,7 +468,10 @@ func (t *Task) buildBackup(client k8sclient.Client, backupTypePrefix string) (*v
 	fmtString := fmt.Sprintf("%%.%ds", 55-len(backupTypePrefix))
 	migrationNameTruncated := fmt.Sprintf(fmtString, t.Owner.GetName())
 	truncatedGenerateName := fmt.Sprintf("%s-%s-", migrationNameTruncated, backupTypePrefix)
-
+	defaultVolumesToFsBackup := false
+	if backupTypePrefix == "stage" {
+		defaultVolumesToFsBackup = true
+	}
 	backup := &velero.Backup{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:       t.Owner.GetCorrelationLabels(),
@@ -478,6 +481,7 @@ func (t *Task) buildBackup(client k8sclient.Client, backupTypePrefix string) (*v
 		},
 		Spec: velero.BackupSpec{
 			IncludeClusterResources: includeClusterResources,
+			DefaultVolumesToRestic:  &defaultVolumesToFsBackup,
 			StorageLocation:         backupLocation.Name,
 			VolumeSnapshotLocations: []string{snapshotLocation.Name},
 			TTL:                     metav1.Duration{Duration: 720 * time.Hour},

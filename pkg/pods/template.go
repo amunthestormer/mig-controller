@@ -2,6 +2,7 @@ package pods
 
 import (
 	"context"
+	"k8s.io/klog"
 
 	"github.com/konveyor/mig-controller/pkg/compat"
 	ocappsv1 "github.com/openshift/api/apps/v1"
@@ -66,6 +67,9 @@ func ListTemplatePods(client compat.Client, namespaces []string) ([]corev1.Pod, 
 		}
 		pods = append(pods, newPods...)
 
+	}
+	for _, pod := range pods {
+		klog.Infof("ListTemplatePods %v\\%v", pod.Namespace, pod.Name)
 	}
 	return pods, nil
 }

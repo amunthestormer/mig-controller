@@ -253,13 +253,13 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	//// If intelligent pv resizing is enabled, Check if migAnalytics exists
-	//if Settings.EnableIntelligentPVResize {
-	//	err = r.ensureMigAnalytics(ctx, plan)
-	//	if err != nil {
-	//		log.Trace(err)
-	//		return reconcile.Result{Requeue: true}, nil
-	//	}
-	//}
+	if Settings.EnableIntelligentPVResize {
+		err = r.ensureMigAnalytics(ctx, plan)
+		if err != nil {
+			log.Trace(err)
+			return reconcile.Result{Requeue: true}, nil
+		}
+	}
 
 	// Set excluded resources on Status.
 	err = r.setExcludedResourceList(plan)

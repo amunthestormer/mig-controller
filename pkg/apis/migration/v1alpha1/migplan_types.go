@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"k8s.io/klog"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -712,7 +713,6 @@ func (r *MigPlan) GetSourceNamespaces() []string {
 		namespace = strings.Split(namespace, ":")[0]
 		includedNamespaces = append(includedNamespaces, namespace)
 	}
-
 	return includedNamespaces
 }
 
@@ -727,6 +727,7 @@ func (r *MigPlan) GetDestinationNamespaces() []string {
 			includedNamespaces = append(includedNamespaces, namespaces[0])
 		}
 	}
+	klog.Infof("GetDestinationNamespaces: includedNamespaces: %v", includedNamespaces)
 
 	return includedNamespaces
 }

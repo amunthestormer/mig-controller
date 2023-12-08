@@ -3,6 +3,7 @@ package migmigration
 import (
 	"context"
 	"fmt"
+	"k8s.io/klog"
 	"path"
 	"strings"
 
@@ -68,6 +69,7 @@ func (t *Task) annotateStageResources() (bool, error) {
 		return false, liberr.Wrap(err)
 	}
 
+	klog.Infof("ItemUpdated number %v", itemsUpdated)
 	if itemsUpdated > AnnotationsPerReconcile {
 		t.Log.Info("Completed [%v] annotations/label operations this reconcile, requeueing.")
 		return false, nil
@@ -123,6 +125,7 @@ func (t *Task) getResticVolumes(client k8sclient.Client, pod corev1.Pod) ([]stri
 // Add label to namespaces
 func (t *Task) labelNamespaces(client k8sclient.Client, itemsUpdated int) (int, error) {
 	total := len(t.sourceNamespaces())
+	klog.Infof("Getting source namespaces %v", t.sourceNamespaces())
 	for i, ns := range t.sourceNamespaces() {
 		namespace := corev1.Namespace{}
 		err := client.Get(

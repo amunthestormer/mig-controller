@@ -2,6 +2,7 @@ package migmigration
 
 import (
 	"context"
+	"k8s.io/klog"
 	"path"
 
 	liberr "github.com/konveyor/controller/pkg/error"
@@ -388,5 +389,34 @@ func (t *Task) veleroPodCredSecretPropagated(cluster *migapi.MigCluster) (bool, 
 	}
 	t.Log.Info("Found propagated cloud secret in Velero Pod on MigCluster",
 		"migCluster", path.Join(cluster.Name, cluster.Namespace))
+	return true, nil
+}
+
+// Added function to check Cloud Secret
+func (t *Task) veleroCloudSecret(cluster *migapi.MigCluster) (bool, error) {
+	client, err := cluster.GetClient(t.Client)
+	if err != nil {
+		klog.Errorf("GetClient: %v", err.Error())
+	}
+	storage, err := t.PlanResources.MigPlan.GetStorage(t.Client)
+	if err != nil {
+		return false, liberr.Wrap(err)
+	}
+
+	bslProvider := storage.GetBackupStorageProvider()
+	vslProvider := storage.GetVolumeSnapshotProvider()
+	for _, provider := range []pvdr.Provider{bslProvider, vslProvider} {
+		secret, err := t.PlanResources.MigPlan.GetCloudSecret(client, provider)
+		if err != nil {
+			klog.Errorf("GetCloudSecret: %v", err.Error())
+			return false, liberr.Wrap(err)
+		}
+		if secret == nil {
+			klog.Error("GetCloudSecret is nil")
+			return false, liberr.Wrap(err)
+		}
+
+	}
+
 	return true, nil
 }

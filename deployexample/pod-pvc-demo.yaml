@@ -6,7 +6,9 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: csi-sc-viettelplugin-ssd
+  storageClassName: standard-rwo
+#  storageClassName: csi-sc-viettelplugin-ssd
+#  storageClassName: standard
   resources:
     requests:
       storage: 5Gi
@@ -16,6 +18,7 @@ kind: Deployment
 metadata:
   name: pod-demo-deployment
   namespace: cluster-migrate-test-app
+#  namespace: migrate-restore
 spec:
   selector:
     matchLabels:
@@ -52,6 +55,7 @@ kind: Service
 metadata:
   name: pod-demo-service
   namespace: cluster-migrate-test-app
+#  namespace: migrate-restore
 spec:
   ports:
     - port: 80

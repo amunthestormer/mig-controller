@@ -16,7 +16,8 @@ spec:
     - cluster-migrate-test-app
   persistentVolumes:
     - capacity: 5Gi
-      name: pvc-eb66ccb3-82cf-4516-a3bd-650799301fdc
+      name: pvc-57cf510f-876f-40aa-8356-f5a67655c0cd
+      storageClass: standard-rwo
       pvc:
         accessModes:
           - ReadWriteOnce
@@ -26,8 +27,7 @@ spec:
       selection:
         action: copy
         copyMethod: filesystem
-        storageClass: standard
-      storageClass: csi-sc-viettelplugin-ssd
+        storageClass: csi-sc-viettelplugin-ssd
       supported:
         actions:
           - copy

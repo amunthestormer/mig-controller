@@ -1,3 +1,8 @@
+Install Velero
+```bash
+velero install --provider gcp --plugins velero/velero-plugin-for-gcp:v1.6.0 --bucket amun-bucket --secret-file gcp-credentials --uploader-type restic --use-volume-snapshots false --namespace openshift-migration
+```
+
 Luồng migrate khi xử dụng mig-controller là:
 - Xác định source và destination cluster bằng CR MigCluster
 - Xác định storage lưu trữ bằng CR MigStorage
@@ -44,9 +49,9 @@ metadata:
   namespace: openshift-migration
 spec:
   backupStorageConfig:
-    gcpBucket: amun
+    gcpBucket: mig-controller-demo
     credsSecretRef:
-      name: gcp-bucket-credential
+      name: gcp-bucket-credentials
       namespace: openshift-config
 ```
 
@@ -136,3 +141,23 @@ spec:
 ```
 thì bị lỗi ```spec.clientCert in body must be of type byte``` do nó không convert từ string(CR) sang **byte array**. Em đang không biết controller convert kiểu gì.  
 
+Apply migmigration
+```yaml
+apiVersion: migration.openshift.io/v1alpha1
+kind: MigMigration
+metadata:
+  name: migmigration-example
+  namespace: openshift-migration
+spec:
+  migPlanRef:
+    name: migplan-example
+    namespace: openshift-migration
+  quiescePods: true
+  stage: false
+```
+
+Nó có nhiều chỗ sử dụng API của openshift nên em phải tìm và bỏ nhưng đoạn đấy đi
+![case-error.png](case-error.png)
+
+Hiện tại đang lỗi ở phần này khi apply migmigration CR do nó dùng version cũ. Em đang cài lại velero version cũ để sử dụng. 
+![velero-pod-error.png](velero-pod-error.png)

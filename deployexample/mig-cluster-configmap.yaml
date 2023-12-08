@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: migration-cluster-config
+  namespace: openshift-migration
+data:
+  STAGE_IMAGE: "alpine:latest"

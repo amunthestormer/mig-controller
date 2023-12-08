@@ -3,6 +3,7 @@ package migmigration
 import (
 	"context"
 	"fmt"
+	"k8s.io/klog"
 	"path"
 	"reflect"
 	"regexp"
@@ -392,6 +393,7 @@ func (t *Task) ensureStagePodsFromTemplates() error {
 	t.Log.Info("Getting list of Stage Pods to create for DeploymentConfigs, Deployments, " +
 		"Daemonsets, ReplicaSets, CronJobs, Jobs on source cluster")
 	podTemplates, err := migpods.ListTemplatePods(client, t.sourceNamespaces())
+	klog.Infof("ensureStagePodsFromTemplates: number of templatePods is %v", len(podTemplates))
 	if err != nil {
 		return liberr.Wrap(err)
 	}
@@ -502,10 +504,12 @@ func (t *Task) ensureStagePodsFromRunning() error {
 			return liberr.Wrap(err)
 		}
 		pods = append(pods, GetApplicationPodsWithStageLabels(t.stagePodLabels(), t.getPVCs(), &podList.Items)...)
+		klog.Infof("ensureStagePodsFromRunning: Number of stage Pod is %v", len(pods))
 	}
 	if len(pods) > 0 {
 		t.Log.Info("Updating application pods on source cluster")
 		updated, err = t.updateApplicationPodWithStageLabel(client, pods)
+		klog.Infof("ensureStagePodsFromRunning: Number of updated Pod is %v", updated)
 		if err != nil {
 			return liberr.Wrap(err)
 		}

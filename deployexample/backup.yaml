@@ -1,0 +1,19 @@
+apiVersion: velero.io/v1
+kind: Backup
+metadata: 
+  name: migrate-backup
+  # Must be the namespace installed by velero.
+  namespace: openshift-migration
+spec: 
+# The resources that only contains the nginx-example namespace.
+  includedNamespaces: 
+    - cluster-migrate-test-app
+# The resources that do not distinguish namespace.
+  includeClusterResources: true 
+# Specify the storage location of the backup data.
+  storageLocation: default
+# Specify the storage location of the volume snapshot.
+  volumeSnapshotLocations: 
+    - default 
+# Use restic to back up the volume.
+  defaultVolumesToRestic: true

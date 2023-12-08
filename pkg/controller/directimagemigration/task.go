@@ -144,7 +144,7 @@ func (t *Task) Run(ctx context.Context) error {
 	}
 
 	// Log "[RUN] <Phase Description>"
-	//t.logRunHeader()
+	t.logRunHeader()
 
 	// Set up Jaeger span for task.Run
 	if opentracing.SpanFromContext(ctx) != nil {

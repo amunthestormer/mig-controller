@@ -7,5 +7,6 @@ spec:
   migPlanRef:
     name: migplan-example
     namespace: openshift-migration
-  quiescePods: true
   stage: false
+  migrateState: false
+  quiescePods: true
