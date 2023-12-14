@@ -161,3 +161,4 @@ Nó có nhiều chỗ sử dụng API của openshift nên em phải tìm và b�
 
 Hiện tại đang lỗi ở phần này khi apply migmigration CR do nó dùng version cũ. Em đang cài lại velero version cũ để sử dụng. 
 ![velero-pod-error.png](velero-pod-error.png)
+

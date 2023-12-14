@@ -16,7 +16,7 @@ spec:
     - cluster-migrate-test-app
   persistentVolumes:
     - capacity: 5Gi
-      name: pvc-57cf510f-876f-40aa-8356-f5a67655c0cd
+      name: pvc-a5253af1-3199-4f75-a853-82832ddd47cb
       storageClass: standard-rwo
       pvc:
         accessModes:

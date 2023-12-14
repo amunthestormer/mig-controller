@@ -20,7 +20,7 @@ require (
 	github.com/konveyor/crane-lib v0.0.11
 	github.com/konveyor/openshift-velero-plugin v0.0.0-20210729141849-876132e34f3d
 	github.com/mattn/go-sqlite3 v1.14.4
-	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.16.0
 	github.com/openshift/api v0.0.0-20210625082935-ad54d363d274
 	github.com/openshift/library-go v0.0.0-20200521120150-e4959e210d3a
@@ -197,7 +197,7 @@ replace k8s.io/apiserver => k8s.io/apiserver v0.22.14
 // Use fork
 replace bitbucket.org/ww/goautoneg v0.0.0-20120707110453-75cd24fc2f2c => github.com/markusthoemmes/goautoneg v0.0.0-20190713162725-c6008fefa5b1
 
-replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v0.10.2-0.20220124204642-f91d69bb9a5e
+//replace github.com/vmware-tanzu/velero => github.com/konveyor/velero v1.0.3
 
 //k8s deps pinning
 

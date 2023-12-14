@@ -5,7 +5,8 @@ metadata:
  namespace: openshift-migration
 spec: 
 # backupName: migrate-backup
- backupName: migmigration-example-stage-z597z
+ backupName: migrate-backup
+
  includedNamespaces: 
  - cluster-migrate-test-app
 # Fill in the resource type to be restored as needed. There is no resource to be excluded under the nginx-example namespace, so enter '*' here.
@@ -14,12 +15,10 @@ spec:
  includeClusterResources: null
 # Resources not included in the restoration. Here storageClasses resource types are excluded.
  excludedResources: 
-# - storageclasses.storage.k8s.io
+ - storageclasses.storage.k8s.io
 # Use the labelSelector selector to select the resource with a specific label. Since there is no need to use the label selector to filter in this sample, please make an annotation here.
 # labelSelector:
 #   matchLabels:
 #     app: nginx
 # Set the relationship mapping strategy of the namespace.
- namespaceMapping:
-  cluster-migrate-test-app: migrate-restore
  restorePVs: true

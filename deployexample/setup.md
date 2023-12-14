@@ -29,6 +29,12 @@ velero install \
 > --default-volumes-to-fs-backup\
 > --namespace $MIGRATE_NAMESPACE
 ```
+
+velero v1.7.1
+```shell
+velero install --provider gcp --plugins velero/velero-plugin-for-gcp:v1.3.1 --bucket mig-controller-demo --secret-file ~/Desktop/forkrepo/mig-controller/deployexample/gcp-credentials --use-volume-snapshots false --use-restic --default-volumes-to-restic true --namespace openshift-migration
+
+```
 - Deploy controller lên destination cluster:
 ```shell
 cd ..
@@ -146,6 +152,21 @@ data:
 ```
 ```shell
 kubectl apply -f velero-configmap.yaml
+```
+- Apply default image cho stage Pod :
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: migration-cluster-config
+  namespace: openshift-migration
+data:
+  STAGE_IMAGE: "alpine:latest"
+```
+```shell
+kubectl apply -f mig-cluster-configmap.yaml
 ```
 - Tạo CR MigMigration để mig-controller thực hiện migrate
 ```yaml
