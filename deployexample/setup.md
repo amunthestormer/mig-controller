@@ -1,8 +1,8 @@
 # Lab
 ## Cài đặt các thành phần
 - Deploy 2 cụm K8s: 
-  - Source cluster: k8s-vdt-2023 
-  - Destination cluster: GKE
+  - Source cluster: k8s-vdt-2023 dedicated
+  - Destination cluster: k8s-test managed
   - Resource migrated: [pod-pvc-demo.yaml](pod-pvc-demo.yaml)
     - ```echo hi > usr/share/nginx/html/hi.txt```
     - ```cat usr/share/nginx/html/hi.txt```
