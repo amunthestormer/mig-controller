@@ -10,14 +10,14 @@ Luồng migrate khi xử dụng mig-controller là:
 - Thực hiện migrate bằng CR Migmigration
 
 Để thực hiện migrate thì các CR phải có status READY=True. CR sẽ ready khi các CR của bước trước READY và các hàm validate+setup chạy thành công
-![ready.png](ready.png)
+![ready.png](img/ready.png)
 
 ### Migcluster
 Khi reconcile, để có thể READY thì migcluster resource cần thực hiện thành công 3 hàm  
-![migcluster-functions.png](migcluster-functions.png)
+![migcluster-functions.png](img/migcluster-functions.png)
 
 RegistryPath là path của ImageRegistry trong Openshift
-![registryPath.png](registryPath.png)
+![registryPath.png](img/registryPath.png)
 Operator Version là version của Mig-Operator
 
 Deploy host cluster
@@ -31,7 +31,7 @@ spec:
   isHostCluster: true
 ```
 
-![host-failed.png](host-failed.png)
+![host-failed.png](img/host-failed.png)
 
 Để pass qua bước này thì em bỏ các hàm validate và setup đi
 
@@ -100,7 +100,7 @@ spec:
 ```
 Migplan khi validatePodProperties thì gặp lỗi ```no matches for kind \"Pod\" in version \"v1\"```
 
-![PodPropertiesError.png](PodPropertiesError.png)
+![PodPropertiesError.png](img/PodPropertiesError.png)
 
 Em nghĩ có thể do khi apply CR Mig-cluster của source cluster vào thiếu client-cert và client-key nên bị unauthorized.
 ```yaml
@@ -118,10 +118,10 @@ spec:
 ```
 
 Em tạo thêm 2 trường cho Mig-ClusterSpec để thêm client cert và key
-![client-cert-key.png](client-cert-key.png)
+![client-cert-key.png](img/client-cert-key.png)
 ```make manifests```  
 CRD: 
-![cluster-crd.png](cluster-crd.png)  
+![cluster-crd.png](img/cluster-crd.png)  
 
 Apply lại source-cluster với cert và key 
 ```yaml
@@ -157,8 +157,8 @@ spec:
 ```
 
 Nó có nhiều chỗ sử dụng API của openshift nên em phải tìm và bỏ nhưng đoạn đấy đi
-![case-error.png](case-error.png)
+![case-error.png](img/case-error.png)
 
 Hiện tại đang lỗi ở phần này khi apply migmigration CR do nó dùng version cũ. Em đang cài lại velero version cũ để sử dụng. 
-![velero-pod-error.png](velero-pod-error.png)
+![velero-pod-error.png](img/velero-pod-error.png)
 
