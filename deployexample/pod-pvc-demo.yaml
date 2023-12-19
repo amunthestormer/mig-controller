@@ -2,12 +2,12 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-demo
-  namespace: cluster-migrate-test-app
+#  namespace: cluster-migrate-test-app
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: standard-rwo
-#  storageClassName: csi-sc-viettelplugin-ssd
+#  storageClassName: standard-rwo
+  storageClassName: csi-sc-viettelplugin-ssd
 #  storageClassName: standard
   resources:
     requests:
@@ -17,7 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pod-demo-deployment
-  namespace: cluster-migrate-test-app
+#  namespace: cluster-migrate-test-app
 #  namespace: migrate-restore
 spec:
   selector:
@@ -54,7 +54,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: pod-demo-service
-  namespace: cluster-migrate-test-app
+#  namespace: cluster-migrate-test-app
 #  namespace: migrate-restore
 spec:
   ports:

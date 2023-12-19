@@ -2,7 +2,7 @@
 
 - Install
 ```shell
-velero install --provider gcp --plugins velero/velero-plugin-for-gcp:v1.3.1 --bucket mig-controller-demo --secret-file ~/Desktop/forkrepo/mig-controller/deployexample/gcp-credentials --use-volume-snapshots false --use-restic --namespace openshift-migration
+velero install --provider gcp --plugins velero/velero-plugin-for-gcp:v1.4.1 --bucket mig-controller-demo --secret-file ~/Desktop/forkrepo/mig-controller/deployexample/gcp-credentials --use-volume-snapshots false --use-restic
 ```
 - Annotate Restore Pod for Restic
 ```shell
@@ -11,6 +11,9 @@ kubectl -n cluster-migrate-test-app annotate pod/POD_NAME backup.velero.io/backu
 - Create Backup
 ```shell
 velero backup create migrate-backup --include-namespaces cluster-migrate-test-app --include-cluster-resources -n openshift-migration --storage-location default  --volume-snapshot-locations default
+```
+```shell
+velero backup create migrate-backup --include-namespaces cluster-migrate-test-app --storage-location default  --volume-snapshot-locations default --include-resources pods,deployments,pvc,service
 ```
 hoặc
 ```yaml
@@ -21,7 +24,6 @@ metadata:
   namespace: openshift-migration
 spec:
   defaultVolumesToRestic: false
-  includeClusterResources: true
   includedNamespaces:
   - cluster-migrate-test-app
   storageLocation: default
@@ -69,5 +71,5 @@ status:
 ```
 - Create Restore
 ```shell
- velero create restore --from-backup migrate-backup --restore-volumes
- ```
+velero create restore migrate-restore --from-backup migrate-backup  --namespace-mappings cluster-migrate-test-app:migrate-restore --include-resources pods,deployments,pvc,service,pv
+```

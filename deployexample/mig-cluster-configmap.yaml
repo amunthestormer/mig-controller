@@ -4,6 +4,6 @@ metadata:
   labels:
     control-plane: controller-manager
   name: migration-cluster-config
-  namespace: openshift-migration
+  namespace: velero
 data:
   STAGE_IMAGE: "alpine:latest"

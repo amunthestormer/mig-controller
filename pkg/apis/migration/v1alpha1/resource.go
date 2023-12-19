@@ -15,8 +15,8 @@ import (
 
 const (
 	TouchAnnotation             = "openshift.io/touch"
-	VeleroNamespace             = "openshift-migration"
-	OpenshiftMigrationNamespace = "openshift-migration"
+	VeleroNamespace             = "velero"
+	OpenshiftMigrationNamespace = "velero"
 )
 
 // Plan

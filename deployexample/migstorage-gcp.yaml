@@ -2,11 +2,11 @@ apiVersion: migration.openshift.io/v1alpha1
 kind: MigStorage
 metadata:
   name: gcp-bucket
-  namespace: openshift-migration
+  namespace: velero
 spec:
   backupStorageConfig:
     gcpBucket: mig-controller-demo
     credsSecretRef:
       name: gcp-credentials
-      namespace: openshift-config
+      namespace: velero
   backupStorageProvider: gcp

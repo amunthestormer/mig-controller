@@ -2,16 +2,16 @@ apiVersion: migration.openshift.io/v1alpha1
 kind: MigPlan
 metadata:
   name: migplan-example
-  namespace: openshift-migration
+  namespace: velero
 spec:
   destMigClusterRef:
     name: host
-    namespace: openshift-migration
+    namespace: velero
   indirectImageMigration: true
   indirectVolumeMigration: true
   migStorageRef:
     name: gcp-bucket
-    namespace: openshift-migration
+    namespace: velero
   namespaces:
     - cluster-migrate-test-app
   persistentVolumes:
@@ -35,4 +35,4 @@ spec:
           - filesystem
   srcMigClusterRef:
     name: source-cluster
-    namespace: openshift-migration
+    namespace: velero

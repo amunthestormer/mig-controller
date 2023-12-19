@@ -4,7 +4,7 @@ metadata:
   # any name
   name: change-storage-class-config
   # namespace of velero deployment
-  namespace: openshift-migration
+  namespace: velero
   labels:
     # this value-less label identifies the ConfigMap as
     # config for a plugin (i.e. the built-in change storage
@@ -15,6 +15,6 @@ metadata:
     velero.io/change-storage-class: RestoreItemAction
 data:
   #<old-sc>:<newsc>
-  # csi-sc-viettelplugin-ssd: standard
+   csi-sc-viettelplugin-ssd: standard-rwo
 #  standard: csi-sc-viettelplugin-ssd
-  standard-rwo: csi-sc-viettelplugin-ssd
+#  standard-rwo: csi-sc-viettelplugin-ssd

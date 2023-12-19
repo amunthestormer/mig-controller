@@ -2,7 +2,10 @@
 ## Cài đặt các thành phần
 - Deploy 2 cụm K8s: 
   - Source cluster: k8s-vdt-2023 
-  - Destination cluster: kind-local
+  - Destination cluster: GKE
+  - Resource migrated: [pod-pvc-demo.yaml](pod-pvc-demo.yaml)
+    - ```echo hi > usr/share/nginx/html/hi.txt```
+    - ```cat usr/share/nginx/html/hi.txt```
 - Tạo resource để migrate trên cụm source:
 ```shell
 kubectl creat ns cluster-migrate-test-app

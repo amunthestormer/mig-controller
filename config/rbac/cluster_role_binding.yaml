@@ -10,7 +10,8 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: mig-controller-manager # Name is case sensitive
-    namespace: openshift-migration
+    #namespace: openshift-migration
+    namespace: velero
 roleRef:
   kind: ClusterRole
   name: cluster-admin
