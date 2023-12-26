@@ -47,7 +47,7 @@ func (r *RemoteClusterSource) run() {
 		time.Sleep(r.Interval)
 		list, err := v1alpha1.ListClusters(r.Client)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return
 		}
 

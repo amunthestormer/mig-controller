@@ -54,7 +54,7 @@ func (h PodHandler) Get(ctx *gin.Context) {
 	err := m.Get(h.container.Db)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			Log.Trace(err)
+			Log.Error(err, "")
 			ctx.Status(http.StatusInternalServerError)
 			return
 		} else {
@@ -86,7 +86,7 @@ func (h PodHandler) List(ctx *gin.Context) {
 	}
 	count, err := collection.Count(db, model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
@@ -96,7 +96,7 @@ func (h PodHandler) List(ctx *gin.Context) {
 			Page: &h.page,
 		})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
@@ -160,7 +160,7 @@ func (h LogHandler) List(ctx *gin.Context) {
 	err := pod.Get(h.container.Db)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			Log.Trace(err)
+			Log.Error(err, "")
 			ctx.Status(http.StatusInternalServerError)
 			return
 		} else {
@@ -192,7 +192,7 @@ func (h *LogHandler) getLog(ctx *gin.Context, pod *model.Pod) {
 			ctx.String(int(stErr.ErrStatus.Code), stErr.ErrStatus.Message)
 			return
 		}
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}

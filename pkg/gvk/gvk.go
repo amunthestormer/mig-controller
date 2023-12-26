@@ -2,10 +2,10 @@ package gvk
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"sort"
 	"strings"
 
-	"github.com/konveyor/controller/pkg/logging"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -19,7 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var log = logging.WithName("gvk")
+var log = klogr.New().WithName("gvk")
 
 type CohabitatingResource struct {
 	resource       string

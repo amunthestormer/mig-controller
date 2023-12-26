@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -27,7 +26,7 @@ func (r *Pod) AddWatch(dsController controller.Controller) error {
 		&handler.EnqueueRequestForObject{},
 		r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 
@@ -39,7 +38,7 @@ func (r *Pod) Reconcile() error {
 	sr := SimpleReconciler{Db: r.ds.Container.Db}
 	err := sr.Reconcile(r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	r.hasReconciled = true
@@ -60,7 +59,7 @@ func (r *Pod) GetDiscovered() ([]model.Model, error) {
 	onCluster := corev1.PodList{}
 	err := r.ds.Client.List(context.TODO(), &onCluster)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, discovered := range onCluster.Items {
@@ -86,7 +85,7 @@ func (r *Pod) GetStored() ([]model.Model, error) {
 		r.ds.Container.Db,
 		model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, pod := range list {
@@ -101,7 +100,7 @@ func (r *Pod) GetStored() ([]model.Model, error) {
 //
 
 func (r *Pod) Create(e event.CreateEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*corev1.Pod)
 	if !cast {
 		return false
@@ -118,7 +117,7 @@ func (r *Pod) Create(e event.CreateEvent) bool {
 }
 
 func (r *Pod) Update(e event.UpdateEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.ObjectNew.(*corev1.Pod)
 	if !cast {
 		return false
@@ -135,7 +134,7 @@ func (r *Pod) Update(e event.UpdateEvent) bool {
 }
 
 func (r *Pod) Delete(e event.DeleteEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*corev1.Pod)
 	if !cast {
 		return false

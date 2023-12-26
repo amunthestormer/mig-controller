@@ -41,7 +41,7 @@ func (h NsHandler) List(ctx *gin.Context) {
 	}
 	count, err := collection.Count(db, model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
@@ -52,7 +52,7 @@ func (h NsHandler) List(ctx *gin.Context) {
 			Sort: []int{5},
 		})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
@@ -69,7 +69,7 @@ func (h NsHandler) List(ctx *gin.Context) {
 			h.container.Db,
 			model.ListOptions{})
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 			ctx.Status(http.StatusInternalServerError)
 			return
 		}
@@ -82,7 +82,7 @@ func (h NsHandler) List(ctx *gin.Context) {
 			h.container.Db,
 			model.ListOptions{})
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 			ctx.Status(http.StatusInternalServerError)
 			return
 		}
@@ -95,7 +95,7 @@ func (h NsHandler) List(ctx *gin.Context) {
 			h.container.Db,
 			model.ListOptions{})
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 			ctx.Status(http.StatusInternalServerError)
 			return
 		}

@@ -15,9 +15,9 @@ package migcluster
 
 import (
 	"context"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"strconv"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/remote"
 	kapi "k8s.io/api/core/v1"

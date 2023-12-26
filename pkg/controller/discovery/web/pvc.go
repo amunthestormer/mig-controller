@@ -51,7 +51,7 @@ func (h PvcHandler) List(ctx *gin.Context) {
 			Page: &h.page,
 		})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
@@ -85,7 +85,7 @@ func (h PvcHandler) Get(ctx *gin.Context) {
 	err := m.Get(h.container.Db)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			Log.Trace(err)
+			Log.Error(err, "")
 			ctx.Status(http.StatusInternalServerError)
 			return
 		} else {

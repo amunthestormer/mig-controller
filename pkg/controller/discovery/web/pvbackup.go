@@ -49,7 +49,7 @@ func (h *PvBackupHandler) Prepare(ctx *gin.Context) int {
 		err := h.backup.Get(h.container.Db)
 		if err != nil {
 			if err != sql.ErrNoRows {
-				Log.Trace(err)
+				Log.Error(err, "")
 				return http.StatusInternalServerError
 			} else {
 				return http.StatusNotFound
@@ -71,13 +71,13 @@ func (h PvBackupHandler) List(ctx *gin.Context) {
 	collection := model.PodVolumeBackup{}
 	count, err := collection.Count(db, model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
 	list, err := collection.List(db, model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
@@ -104,7 +104,7 @@ func (h PvBackupHandler) Get(ctx *gin.Context) {
 	err := h.backup.Get(h.container.Db)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			Log.Trace(err)
+			Log.Error(err, "")
 			ctx.Status(http.StatusInternalServerError)
 			return
 		} else {

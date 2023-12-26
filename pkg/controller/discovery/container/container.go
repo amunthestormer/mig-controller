@@ -3,17 +3,17 @@ package container
 import (
 	"context"
 	"database/sql"
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
 )
 
 // Shared logger.
-var Log *logging.Logger
+var Log = klogr.New()
 
 // DataSource Key
 type DsKey types.NamespacedName
@@ -80,7 +80,8 @@ func (r *Container) Add(cluster *migapi.MigCluster, collections ...Collection) e
 	ds := build()
 	err := ds.Start(cluster)
 	if err != nil {
-		Log.Trace(err)
+		//Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 
@@ -110,13 +111,15 @@ func (r *Container) Prune() error {
 	}
 	stored, err := model.Cluster{}.List(r.Db, model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		//Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	list := migapi.MigClusterList{}
 	err = r.Client.List(context.TODO(), &list)
 	if err != nil {
-		Log.Trace(err)
+		//Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	wanted := map[string]bool{}
@@ -148,7 +151,8 @@ func (r *Container) HasCluster(cluster *model.Cluster) (bool, error) {
 		if errors.IsNotFound(err) {
 			return false, nil
 		} else {
-			Log.Trace(err)
+			//Log.Trace(err)
+			Log.Error(err, "")
 			return false, err
 		}
 	}

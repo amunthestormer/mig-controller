@@ -44,7 +44,7 @@ func (m Pod) List(db DB, options ListOptions) ([]*Pod, error) {
 	list := []*Pod{}
 	listed, err := Table{db}.List(&m, options)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, intPtr := range listed {

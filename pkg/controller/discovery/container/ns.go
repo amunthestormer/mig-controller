@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	"k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -26,7 +25,7 @@ func (r *Namespace) AddWatch(dsController controller.Controller) error {
 		&handler.EnqueueRequestForObject{},
 		r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 
@@ -40,7 +39,7 @@ func (r *Namespace) Reconcile() error {
 	}
 	err := sr.Reconcile(r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	r.hasReconciled = true
@@ -61,7 +60,7 @@ func (r *Namespace) GetDiscovered() ([]model.Model, error) {
 	onCluster := v1.NamespaceList{}
 	err := r.ds.Client.List(context.TODO(), &onCluster)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, discovered := range onCluster.Items {
@@ -87,7 +86,7 @@ func (r *Namespace) GetStored() ([]model.Model, error) {
 		r.ds.Container.Db,
 		model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, ns := range list {
@@ -102,7 +101,7 @@ func (r *Namespace) GetStored() ([]model.Model, error) {
 //
 
 func (r *Namespace) Create(e event.CreateEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*v1.Namespace)
 	if !cast {
 		return false
@@ -123,7 +122,7 @@ func (r *Namespace) Update(e event.UpdateEvent) bool {
 }
 
 func (r *Namespace) Delete(e event.DeleteEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*v1.Namespace)
 	if !cast {
 		return false

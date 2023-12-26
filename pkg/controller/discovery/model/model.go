@@ -4,18 +4,18 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"fmt"
+	"k8s.io/klog/v2/klogr"
 	pathlib "path"
 	"reflect"
 	"strconv"
 	"sync"
 
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/konveyor/mig-controller/pkg/settings"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 // Shared logger.
-var Log *logging.Logger
+var Log = klogr.New()
 
 // Application settings.
 var Settings = &settings.Settings
@@ -80,7 +80,7 @@ func Create() (*sql.DB, error) {
 	for _, ddl := range statements {
 		_, err = db.Exec(ddl)
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 			db.Close()
 			return nil, err
 		}

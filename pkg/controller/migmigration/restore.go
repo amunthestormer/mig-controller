@@ -148,7 +148,7 @@ func (t *Task) getPodVolumeRestoresForRestore(restore *velero.Restore) *velero.P
 	}
 	client, err := t.getDestinationClient()
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return &list
 	}
 	err = client.List(
@@ -156,7 +156,7 @@ func (t *Task) getPodVolumeRestoresForRestore(restore *velero.Restore) *velero.P
 		&list,
 		k8sclient.MatchingLabels(restoreAssociationLabel))
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 	}
 	return &list
 }
@@ -280,7 +280,7 @@ func (t *Task) hasRestoreCompleted(restore *velero.Restore) (bool, []string) {
 			getPodVolumeRestoresProgress(pvrs)...)
 		stageReport, err := t.allStagePodsMatch()
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 		}
 		progress = append(progress, stageReport...)
 	case velero.RestorePhaseCompleted:
@@ -300,7 +300,7 @@ func (t *Task) hasRestoreCompleted(restore *velero.Restore) (bool, []string) {
 			getPodVolumeRestoresProgress(pvrs)...)
 		stageReport, err := t.allStagePodsMatch()
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 		}
 		progress = append(progress, stageReport...)
 	case velero.RestorePhaseFailed:
@@ -337,7 +337,7 @@ func (t *Task) hasRestoreCompleted(restore *velero.Restore) (bool, []string) {
 			getPodVolumeRestoresProgress(pvrs)...)
 		stageReport, err := t.allStagePodsMatch()
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 		}
 		progress = append(progress, stageReport...)
 	case velero.RestorePhaseFailedValidation:

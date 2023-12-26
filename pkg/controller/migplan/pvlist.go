@@ -3,11 +3,11 @@ package migplan
 import (
 	"context"
 	"fmt"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"path"
 	"regexp"
 	"strings"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	migpods "github.com/konveyor/mig-controller/pkg/pods"

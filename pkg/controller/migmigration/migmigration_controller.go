@@ -19,10 +19,10 @@ package migmigration
 import (
 	"context"
 	"fmt"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
 	liberr "github.com/konveyor/controller/pkg/error"
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
@@ -42,7 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logging.WithName("migration")
+var log = klogr.New().WithName("migration")
 
 // Add creates a new MigMigration Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -171,7 +171,7 @@ type ReconcileMigMigration struct {
 func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
 	// Set values.
-	log = logging.WithName("migration", "migMigration", request.Name)
+	log = log.WithName("migration").WithValues("migMigration", request.Name)
 
 	// Retrieve the MigMigration being reconciled
 	migration := &migapi.MigMigration{}
@@ -182,7 +182,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 			return reconcile.Result{Requeue: false}, nil
 		}
 		log.Info("Error getting migmigration for reconcile, requeueing.")
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 	// Get jaeger spans for migration and reconcile, add to ctx
@@ -196,7 +196,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 	err = r.ensureLabels(migration)
 	if err != nil {
 		log.Info("Error setting debug labels, requeueing.")
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, err
 	}
 
@@ -215,7 +215,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 		err := r.Update(context.TODO(), migration)
 		if err != nil {
 			log.Error(err, "Error updating resource on reconcile exit.")
-			log.Trace(err)
+			log.Error(err, "")
 			return
 		}
 	}()
@@ -229,7 +229,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 	err = r.setOwnerReference(migration)
 	if err != nil {
 		log.Info("Failed to set owner references, requeuing.")
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, err
 	}
 
@@ -240,7 +240,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 	err = r.validate(ctx, migration)
 	if err != nil {
 		log.Info("Validation failed, requeueing")
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -254,7 +254,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 		requeueAfter, err = r.postpone(migration)
 		if err != nil {
 			log.Info("Failed to check if postpone required, requeueing")
-			log.Trace(err)
+			log.Error(err, "")
 			return reconcile.Result{Requeue: true}, err
 		}
 	}
@@ -263,7 +263,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 	if !migration.Status.HasBlockerCondition() {
 		requeueAfter, err = r.migrate(ctx, migration)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return reconcile.Result{Requeue: true}, nil
 		}
 	}
@@ -281,7 +281,7 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 	migration.MarkReconciled()
 	err = r.Update(context.TODO(), migration)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

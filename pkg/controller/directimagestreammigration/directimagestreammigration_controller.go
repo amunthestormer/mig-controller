@@ -18,9 +18,9 @@ package directimagestreammigration
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -35,7 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logging.WithName("directimagestream")
+var log = klogr.New().WithName("directimagestream")
 
 // Add creates a new DirectImageStreamMigration Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -101,7 +101,7 @@ type ReconcileDirectImageStreamMigration struct {
 // +kubebuilder:rbac:groups=migration.openshift.io,resources=directimagestreammigrations,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=migration.openshift.io,resources=directimagestreammigrations/status,verbs=get;update;patch
 func (r *ReconcileDirectImageStreamMigration) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
-	log = logging.WithName("directimagestream", "dism", request.Name)
+	log = log.WithName("directimagestream").WithValues("dism", request.Name)
 	// Fetch the DirectImageStreamMigration instance
 	imageStreamMigration := &migapi.DirectImageStreamMigration{}
 	err := r.Get(context.TODO(), request.NamespacedName, imageStreamMigration)
@@ -118,7 +118,7 @@ func (r *ReconcileDirectImageStreamMigration) Reconcile(ctx context.Context, req
 	// Set MigMigration name key on logger
 	migration, err := imageStreamMigration.GetMigrationForDISM(r)
 	if migration != nil {
-		log.Real = log.WithValues("migMigration", migration.Name)
+		log = log.WithValues("migMigration", migration.Name)
 	}
 
 	// Set up jaeger tracing, add to ctx
@@ -139,7 +139,8 @@ func (r *ReconcileDirectImageStreamMigration) Reconcile(ctx context.Context, req
 	// Validation
 	err = r.validate(ctx, imageStreamMigration)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -149,7 +150,8 @@ func (r *ReconcileDirectImageStreamMigration) Reconcile(ctx context.Context, req
 	if !imageStreamMigration.Status.HasBlockerCondition() {
 		requeueAfter, err = r.migrate(ctx, imageStreamMigration)
 		if err != nil {
-			log.Trace(err)
+			//log.Trace(err)
+			log.Error(err, "")
 			return reconcile.Result{Requeue: true}, nil
 		}
 	}
@@ -167,7 +169,8 @@ func (r *ReconcileDirectImageStreamMigration) Reconcile(ctx context.Context, req
 	imageStreamMigration.MarkReconciled()
 	err = r.Update(context.TODO(), imageStreamMigration)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

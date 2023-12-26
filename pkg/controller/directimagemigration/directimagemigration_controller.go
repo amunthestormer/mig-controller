@@ -18,9 +18,9 @@ package directimagemigration
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -35,7 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logging.WithName("directimage")
+var log = klogr.New().WithName("directimage")
 
 // Add creates a new DirectImageMigration Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -113,7 +113,7 @@ type ReconcileDirectImageMigration struct {
 // +kubebuilder:rbac:groups=migration.openshift.io,resources=directimagemigrations/status,verbs=get;update;patch
 func (r *ReconcileDirectImageMigration) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the DirectImageMigration instance
-	log = logging.WithName("directimage", "dim", request.Name)
+	log = log.WithName("directimage").WithValues("dim", request.Name)
 	imageMigration := &migapi.DirectImageMigration{}
 	err := r.Get(context.TODO(), request.NamespacedName, imageMigration)
 	if err != nil {
@@ -129,7 +129,7 @@ func (r *ReconcileDirectImageMigration) Reconcile(ctx context.Context, request r
 	// Set MigMigration name key on logger
 	migration, err := imageMigration.GetMigrationForDIM(r)
 	if migration != nil {
-		log.Real = log.WithValues("migMigration", migration.Name)
+		log = log.WithValues("migMigration", migration.Name)
 	}
 
 	// Set up jaeger tracing, add to ctx
@@ -150,7 +150,8 @@ func (r *ReconcileDirectImageMigration) Reconcile(ctx context.Context, request r
 	// Validation
 	err = r.validate(ctx, imageMigration)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -160,7 +161,8 @@ func (r *ReconcileDirectImageMigration) Reconcile(ctx context.Context, request r
 	if !imageMigration.Status.HasBlockerCondition() {
 		requeueAfter, err = r.migrate(ctx, imageMigration)
 		if err != nil {
-			log.Trace(err)
+			//log.Trace(err)
+			log.Error(err, "")
 			return reconcile.Result{Requeue: true}, nil
 		}
 	}
@@ -178,7 +180,8 @@ func (r *ReconcileDirectImageMigration) Reconcile(ctx context.Context, request r
 	imageMigration.MarkReconciled()
 	err = r.Update(context.TODO(), imageMigration)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

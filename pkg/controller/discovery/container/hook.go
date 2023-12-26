@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -27,7 +26,7 @@ func (r *Hook) AddWatch(dsController controller.Controller) error {
 		&handler.EnqueueRequestForObject{},
 		r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 
@@ -41,7 +40,7 @@ func (r *Hook) Reconcile() error {
 	}
 	err := sr.Reconcile(r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	r.hasReconciled = true
@@ -62,7 +61,7 @@ func (r *Hook) GetDiscovered() ([]model.Model, error) {
 	onCluster := migapi.MigHookList{}
 	err := r.ds.Client.List(context.TODO(), &onCluster)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, discovered := range onCluster.Items {
@@ -80,7 +79,7 @@ func (r *Hook) GetStored() ([]model.Model, error) {
 		r.ds.Container.Db,
 		model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, dim := range list {
@@ -95,7 +94,7 @@ func (r *Hook) GetStored() ([]model.Model, error) {
 //
 
 func (r *Hook) Create(e event.CreateEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*migapi.MigHook)
 	if !cast {
 		return false
@@ -108,7 +107,7 @@ func (r *Hook) Create(e event.CreateEvent) bool {
 }
 
 func (r *Hook) Update(e event.UpdateEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.ObjectNew.(*migapi.MigHook)
 	if !cast {
 		return false
@@ -121,7 +120,7 @@ func (r *Hook) Update(e event.UpdateEvent) bool {
 }
 
 func (r *Hook) Delete(e event.DeleteEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*migapi.MigHook)
 	if !cast {
 		return false

@@ -19,14 +19,14 @@ package migplan
 import (
 	"context"
 	"fmt"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/opentracing/opentracing-go"
+	"k8s.io/klog/v2/klogr"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	liberr "github.com/konveyor/controller/pkg/error"
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
@@ -53,7 +53,7 @@ const (
 // define maximum waiting time for mig analytic to be ready
 var migAnalyticsTimeout = 2 * time.Minute
 
-var log = logging.WithName("plan")
+var log = klogr.New().WithName("plan")
 
 // Application settings.
 var Settings = &settings.Settings
@@ -195,7 +195,7 @@ type ReconcileMigPlan struct {
 
 func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
-	log = logging.WithName("plan", "migPlan", request.Name)
+	log = log.WithName("plan").WithValues("migPlan", request.Name)
 
 	// Fetch the MigPlan instance
 	plan := &migapi.MigPlan{}
@@ -204,7 +204,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 		if errors.IsNotFound(err) {
 			return reconcile.Result{Requeue: false}, nil
 		}
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, err
 	}
 
@@ -227,7 +227,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 		plan.Status.SetReconcileFailed(err)
 		err := r.Update(context.TODO(), plan)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return
 		}
 	}()
@@ -235,7 +235,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	// Plan closed.
 	closed, err := r.handleClosed(ctx, plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 	if closed {
@@ -248,7 +248,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	// Plan Suspended
 	err = r.planSuspended(ctx, plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -256,7 +256,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	if Settings.EnableIntelligentPVResize {
 		err = r.ensureMigAnalytics(ctx, plan)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return reconcile.Result{Requeue: true}, nil
 		}
 	}
@@ -264,21 +264,21 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	// Set excluded resources on Status.
 	err = r.setExcludedResourceList(plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Validations.
 	err = r.validate(ctx, plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// PV discovery
 	err = r.updatePvs(ctx, plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -286,21 +286,21 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	nfsValidation := NfsValidation{Plan: plan}
 	err = nfsValidation.Run(r.Client)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Validate PV actions.
 	err = r.validatePvSelections(ctx, plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Storage
 	err = r.ensureStorage(ctx, plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -308,7 +308,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	if Settings.EnableIntelligentPVResize {
 		migAnalytic, err := r.checkIfMigAnalyticsReady(ctx, plan)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return reconcile.Result{Requeue: true}, nil
 		}
 		if migAnalytic != nil {
@@ -342,7 +342,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	plan.MarkReconciled()
 	err = r.Update(context.TODO(), plan)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

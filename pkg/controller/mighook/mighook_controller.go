@@ -18,11 +18,11 @@ package mighook
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logging.WithName("hook")
+var log = klogr.New().WithName("hook")
 
 // Add creates a new MigHook Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -83,7 +83,7 @@ type ReconcileMigHook struct {
 
 func (r *ReconcileMigHook) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
-	log = logging.WithName("hook", "migHook", request.Name)
+	log = log.WithName("hook").WithValues("migHook", request.Name)
 
 	// Fetch the MigHook instance
 	hook := &migapi.MigHook{}
@@ -92,7 +92,7 @@ func (r *ReconcileMigHook) Reconcile(ctx context.Context, request reconcile.Requ
 		if errors.IsNotFound(err) {
 			return reconcile.Result{Requeue: false}, nil
 		}
-		log.Trace(err)
+		log.Error(err, " ")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -113,7 +113,7 @@ func (r *ReconcileMigHook) Reconcile(ctx context.Context, request reconcile.Requ
 		hook.Status.SetReconcileFailed(err)
 		err := r.Update(context.TODO(), hook)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, " ")
 			return
 		}
 	}()
@@ -124,7 +124,7 @@ func (r *ReconcileMigHook) Reconcile(ctx context.Context, request reconcile.Requ
 	// Validations.
 	err = r.validate(ctx, hook)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, " ")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -140,7 +140,7 @@ func (r *ReconcileMigHook) Reconcile(ctx context.Context, request reconcile.Requ
 	hook.MarkReconciled()
 	err = r.Update(context.TODO(), hook)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, " ")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

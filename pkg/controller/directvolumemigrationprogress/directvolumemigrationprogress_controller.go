@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"k8s.io/klog/v2/klogr"
 	"math"
 	"path"
 	"regexp"
@@ -34,7 +35,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	liberr "github.com/konveyor/controller/pkg/error"
-	"github.com/konveyor/controller/pkg/logging"
 	rsync_transfer "github.com/konveyor/crane-lib/state_transfer/transfer/rsync"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
@@ -50,7 +50,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logging.WithName("pvmigrationprogress")
+var log = klogr.New().WithName("pvmigrationprogress")
 
 const (
 	// CreatingContainer initial container state
@@ -113,7 +113,7 @@ type ReconcileDirectVolumeMigrationProgress struct {
 // +kubebuilder:rbac:groups=migration.openshift.io,resources=directvolumemigrationprogresses/status,verbs=get;update;patch
 func (r *ReconcileDirectVolumeMigrationProgress) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
-	log = logging.WithName("pvmigrationprogress", "dvmp", request.Name)
+	log = log.WithName("pvmigrationprogress").WithValues("dvmp", request.Name)
 	// Fetch the DirectVolumeMigrationProgress instance
 	pvProgress := &migapi.DirectVolumeMigrationProgress{}
 	err = r.Get(context.TODO(), request.NamespacedName, pvProgress)
@@ -127,7 +127,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) Reconcile(ctx context.Context, 
 	// Set MigMigration name key on logger
 	migration, err := pvProgress.GetMigrationforDVMP(r)
 	if migration != nil {
-		log.Real = log.WithValues("migMigration", migration.Name)
+		log = log.WithValues("migMigration", migration.Name)
 	}
 
 	// Set up jaeger tracing
@@ -144,7 +144,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) Reconcile(ctx context.Context, 
 		pvProgress.Status.SetReconcileFailed(err)
 		err := r.Update(context.TODO(), pvProgress)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return
 		}
 	}()
@@ -181,7 +181,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) Reconcile(ctx context.Context, 
 	pvProgress.MarkReconciled()
 	err = r.Update(context.TODO(), pvProgress)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

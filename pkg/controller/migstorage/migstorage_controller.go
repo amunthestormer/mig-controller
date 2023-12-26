@@ -18,12 +18,12 @@ package migstorage
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	kapi "k8s.io/api/core/v1"
@@ -38,7 +38,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logging.WithName("storage")
+var log = klogr.New().WithName("storage")
+
+//logging.WithName("storage")
 
 // Add creates a new MigStorage Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -109,7 +111,7 @@ type ReconcileMigStorage struct {
 
 func (r *ReconcileMigStorage) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
-	log = logging.WithName("storage", "migStorage", request.Name)
+	log = log.WithValues("migStorage", request.Name)
 
 	// Fetch the MigStorage instance
 	storage := &migapi.MigStorage{}
@@ -118,7 +120,8 @@ func (r *ReconcileMigStorage) Reconcile(ctx context.Context, request reconcile.R
 		if errors.IsNotFound(err) {
 			return reconcile.Result{Requeue: false}, nil
 		}
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -131,7 +134,8 @@ func (r *ReconcileMigStorage) Reconcile(ctx context.Context, request reconcile.R
 
 	// Report reconcile error.
 	defer func() {
-		log.Info("CR", "conditions", storage.Status.Conditions)
+		klogr.New().Info("CR", "conditions", storage.Status.Conditions)
+		//log.Info("CR", "conditions", storage.Status.Conditions)
 		storage.Status.Conditions.RecordEvents(storage, r.EventRecorder)
 		if err == nil || errors.IsConflict(errorutil.Unwrap(err)) {
 			return
@@ -139,7 +143,8 @@ func (r *ReconcileMigStorage) Reconcile(ctx context.Context, request reconcile.R
 		storage.Status.SetReconcileFailed(err)
 		err := r.Update(context.TODO(), storage)
 		if err != nil {
-			log.Trace(err)
+			//log.Trace(err)
+			log.Error(err, "")
 			return
 		}
 	}()
@@ -150,7 +155,8 @@ func (r *ReconcileMigStorage) Reconcile(ctx context.Context, request reconcile.R
 	// Validations.
 	err = r.validate(ctx, storage)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -169,7 +175,8 @@ func (r *ReconcileMigStorage) Reconcile(ctx context.Context, request reconcile.R
 	storage.MarkReconciled()
 	err = r.Update(context.TODO(), storage)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

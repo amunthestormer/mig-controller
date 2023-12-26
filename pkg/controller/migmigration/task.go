@@ -1677,14 +1677,14 @@ func (t *Task) hasDirectVolumes() bool {
 func (t *Task) hasImageStreams() (bool, error) {
 	client, err := t.getSourceClient()
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return false, err
 	}
 	for _, ns := range t.sourceNamespaces() {
 		imageStreamList := imagev1.ImageStreamList{}
 		err := client.List(context.Background(), &imageStreamList, k8sclient.InNamespace(ns))
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return false, err
 		}
 		if len(imageStreamList.Items) > 0 {

@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	"k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -26,7 +25,7 @@ func (r *PV) AddWatch(dsController controller.Controller) error {
 		&handler.EnqueueRequestForObject{},
 		r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 
@@ -40,7 +39,7 @@ func (r *PV) Reconcile() error {
 	}
 	err := sr.Reconcile(r)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	r.hasReconciled = true
@@ -61,7 +60,7 @@ func (r *PV) GetDiscovered() ([]model.Model, error) {
 	onCluster := v1.PersistentVolumeList{}
 	err := r.ds.Client.List(context.TODO(), &onCluster)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, discovered := range onCluster.Items {
@@ -87,7 +86,7 @@ func (r *PV) GetStored() ([]model.Model, error) {
 		r.ds.Container.Db,
 		model.ListOptions{})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return nil, err
 	}
 	for _, pv := range list {
@@ -102,7 +101,7 @@ func (r *PV) GetStored() ([]model.Model, error) {
 //
 
 func (r *PV) Create(e event.CreateEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*v1.PersistentVolume)
 	if !cast {
 		return false
@@ -119,7 +118,7 @@ func (r *PV) Create(e event.CreateEvent) bool {
 }
 
 func (r *PV) Update(e event.UpdateEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.ObjectNew.(*v1.PersistentVolume)
 	if !cast {
 		return false
@@ -136,7 +135,7 @@ func (r *PV) Update(e event.UpdateEvent) bool {
 }
 
 func (r *PV) Delete(e event.DeleteEvent) bool {
-	Log = logging.WithName("discovery")
+	Log = Log.WithName("discovery")
 	object, cast := e.Object.(*v1.PersistentVolume)
 	if !cast {
 		return false

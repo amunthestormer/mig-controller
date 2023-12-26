@@ -19,10 +19,10 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"path"
 	"strings"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	imagev1 "github.com/openshift/api/image/v1"
 	kapi "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

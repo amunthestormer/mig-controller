@@ -3,8 +3,8 @@ package mighook
 import (
 	"context"
 	"encoding/base64"
-
 	liberr "github.com/konveyor/controller/pkg/error"
+
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/opentracing/opentracing-go"
 )

@@ -54,7 +54,7 @@ func (r *ReconcileDirectImageMigration) migrate(ctx context.Context, imageMigrat
 			"phase", task.Phase,
 			"phaseDescription", task.getPhaseDescription(task.Phase),
 			"error", errorutil.Unwrap(err).Error())
-		log.Trace(err)
+		log.Error(err, "")
 		task.fail(MigrationFailed, []string{err.Error()})
 		return task.Requeue, nil
 	}

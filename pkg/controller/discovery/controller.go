@@ -18,10 +18,10 @@ package discovery
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"reflect"
 	"time"
 
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/container"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
@@ -40,16 +40,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log *logging.Logger
+var log = klogr.New()
 
 // Application settings.
 var Settings = &settings.Settings
 
 func init() {
-	log = logging.WithName("discovery")
-	model.Log = logging.WithName("discovery")
-	container.Log = logging.WithName("discovery")
-	web.Log = logging.WithName("discovery")
+	log = log.WithName("discovery")
+	model.Log = log.WithName("discovery")
+	container.Log = log.WithName("discovery")
+	web.Log = log.WithName("discovery")
 }
 
 func Add(mgr manager.Manager) error {
@@ -107,7 +107,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 	c, err := controller.New("discovery", mgr, options)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, " ")
 		return err
 	}
 	err = c.Watch(
@@ -117,7 +117,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&handler.EnqueueRequestForObject{},
 		&ClusterPredicate{})
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, " ")
 		return err
 	}
 
@@ -137,7 +137,7 @@ func (r *ReconcileDiscovery) Reconcile(ctx context.Context, request reconcile.Re
 	reQueue := reconcile.Result{RequeueAfter: time.Second * 10}
 	err := r.container.Prune()
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, " ")
 		return reQueue, nil
 	}
 	cluster := &migapi.MigCluster{}
@@ -147,7 +147,7 @@ func (r *ReconcileDiscovery) Reconcile(ctx context.Context, request reconcile.Re
 			r.container.Delete(request.NamespacedName)
 			return reconcile.Result{Requeue: false}, nil
 		}
-		log.Trace(err)
+		log.Error(err, " ")
 		return reQueue, nil
 	}
 	if !r.IsValid(cluster) {
@@ -184,7 +184,7 @@ func (r *ReconcileDiscovery) Reconcile(ctx context.Context, request reconcile.Re
 		collections...,
 	)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, " ")
 		return reQueue, nil
 	}
 
@@ -201,7 +201,7 @@ func (r *ReconcileDiscovery) IsValid(cluster *migapi.MigCluster) bool {
 	}
 	secret, err := cluster.GetServiceAccountSecret(r.client)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, " ")
 		return false
 	}
 	if secret == nil {

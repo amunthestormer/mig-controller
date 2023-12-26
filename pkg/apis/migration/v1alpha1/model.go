@@ -2,10 +2,10 @@ package v1alpha1
 
 import (
 	"context"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"k8s.io/klog"
 	"strconv"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	imagev1 "github.com/openshift/api/image/v1"

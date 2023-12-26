@@ -18,7 +18,9 @@ package migcluster
 
 import (
 	"context"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"k8s.io/klog"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
 	"github.com/konveyor/mig-controller/pkg/errorutil"
@@ -26,8 +28,6 @@ import (
 	"github.com/konveyor/mig-controller/pkg/settings"
 	"github.com/opentracing/opentracing-go"
 
-	liberr "github.com/konveyor/controller/pkg/error"
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	kapi "k8s.io/api/core/v1"
@@ -47,7 +47,7 @@ import (
 )
 
 var Settings = &settings.Settings
-var log = logging.WithName("cluster")
+var log = klogr.New().WithName("cluster")
 
 // Add creates a new MigCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -118,7 +118,7 @@ type ReconcileMigCluster struct {
 
 func (r *ReconcileMigCluster) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
-	log = logging.WithName("cluster", "migCluster", request.Name)
+	log = log.WithName("cluster").WithValues("migCluster", request.Name)
 
 	// Fetch the MigCluster
 	cluster := &migapi.MigCluster{}
@@ -127,7 +127,7 @@ func (r *ReconcileMigCluster) Reconcile(ctx context.Context, request reconcile.R
 		if errors.IsNotFound(err) {
 			return reconcile.Result{Requeue: false}, nil
 		}
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -148,7 +148,7 @@ func (r *ReconcileMigCluster) Reconcile(ctx context.Context, request reconcile.R
 		cluster.Status.SetReconcileFailed(err)
 		err := r.Update(context.TODO(), cluster)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return
 		}
 	}()
@@ -160,21 +160,21 @@ func (r *ReconcileMigCluster) Reconcile(ctx context.Context, request reconcile.R
 	err = r.validate(ctx, cluster)
 	if err != nil {
 		log.Info("Validate failed")
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Set Status.RegistryPath
 	//err = cluster.SetRegistryPath(r)
 	//if err != nil {
-	//	log.Trace(err)
+	//	log.Error(err, ")
 	//	return reconcile.Result{Requeue: true}, nil
 	//}
 
 	// Set Status.OperatorVersion
 	//err = cluster.SetOperatorVersion(r)
 	//if err != nil {
-	//	log.Trace(err)
+	//	log.Error(err, ")
 	//	return reconcile.Result{Requeue: true}, nil
 	//}
 
@@ -183,7 +183,7 @@ func (r *ReconcileMigCluster) Reconcile(ctx context.Context, request reconcile.R
 			// Remote Watch.
 			err = r.setupRemoteWatch(cluster)
 			if err != nil {
-				log.Trace(err)
+				log.Error(err, "")
 				return reconcile.Result{Requeue: true}, nil
 			}
 		} else {
@@ -206,7 +206,7 @@ func (r *ReconcileMigCluster) Reconcile(ctx context.Context, request reconcile.R
 	cluster.MarkReconciled()
 	err = r.Update(context.TODO(), cluster)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

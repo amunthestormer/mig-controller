@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/onsi/gomega"
 	"os"
 	pathlib "path"
@@ -13,7 +12,7 @@ var uid = 0
 
 func init() {
 	Settings.Load()
-	log := logging.WithName("Test")
+	log := klogr.WithName("Test")
 	Log = log
 }
 

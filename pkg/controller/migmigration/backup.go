@@ -3,13 +3,13 @@ package migmigration
 import (
 	"context"
 	"fmt"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"path"
 	"sort"
 	"strconv"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/settings"
 	"github.com/pkg/errors"
@@ -33,7 +33,6 @@ func (t *Task) ensureInitialBackup() (*velero.Backup, error) {
 	if backup != nil {
 		return backup, nil
 	}
-
 	client, err := t.getSourceClient()
 	if err != nil {
 		return nil, liberr.Wrap(err)
@@ -164,7 +163,7 @@ func (t *Task) getPodVolumeBackupsForBackup(backup *velero.Backup) *velero.PodVo
 	}
 	client, err := t.getSourceClient()
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return &list
 	}
 	err = client.List(
@@ -172,7 +171,7 @@ func (t *Task) getPodVolumeBackupsForBackup(backup *velero.Backup) *velero.PodVo
 		&list,
 		k8sclient.MatchingLabels(backupAssociationLabel))
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 	}
 	return &list
 }

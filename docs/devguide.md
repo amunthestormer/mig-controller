@@ -67,7 +67,7 @@ considered noisy and unhelpful.
 _Example:_
 ```
 if err != nil {
-    log.Trace(err)
+    log.Error(err, "")
     return err
 }
 ```

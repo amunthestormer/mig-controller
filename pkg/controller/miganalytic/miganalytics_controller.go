@@ -20,11 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/klog/v2/klogr"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	"github.com/konveyor/mig-controller/pkg/gvk"
@@ -62,7 +62,7 @@ const (
 	maxConcurrentReconciles = 2
 )
 
-var log = logging.WithName("analytics")
+var log = klogr.New().WithName("analytics")
 var Settings = &settings.Settings
 
 // Add creates a new MigAnalytic Controller and adds it to the Manager with default RBAC.
@@ -84,7 +84,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		MaxConcurrentReconciles: maxConcurrentReconciles,
 	})
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return err
 	}
 
@@ -96,7 +96,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			Namespace: migapi.OpenshiftMigrationNamespace,
 		})
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return err
 	}
 
@@ -127,7 +127,7 @@ type MigAnalyticPersistentVolumeDetails struct {
 
 func (r *ReconcileMigAnalytic) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
-	log = logging.WithName("analytics", "migAnalytic", request.Name)
+	log = log.WithName("analytics").WithValues("migAnalytic", request.Name)
 
 	// Fetch the MigAnalytic instance
 	analytic := &migapi.MigAnalytic{}
@@ -137,7 +137,7 @@ func (r *ReconcileMigAnalytic) Reconcile(ctx context.Context, request reconcile.
 		if errors.IsNotFound(err) {
 			return reconcile.Result{Requeue: false}, nil
 		}
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -164,7 +164,7 @@ func (r *ReconcileMigAnalytic) Reconcile(ctx context.Context, request reconcile.
 		analytic.Status.SetReconcileFailed(err)
 		err := r.Update(context.TODO(), analytic)
 		if err != nil {
-			log.Trace(err)
+			log.Error(err, "")
 			return
 		}
 	}()
@@ -179,14 +179,14 @@ func (r *ReconcileMigAnalytic) Reconcile(ctx context.Context, request reconcile.
 	// Validations.
 	err = r.validate(analytic)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Update Validation Status
 	err = r.Update(context.TODO(), analytic)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -216,7 +216,7 @@ func (r *ReconcileMigAnalytic) Reconcile(ctx context.Context, request reconcile.
 	analytic.MarkReconciled()
 	err = r.Update(context.TODO(), analytic)
 	if err != nil {
-		log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

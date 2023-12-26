@@ -18,9 +18,9 @@ package directvolumemigration
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
-	"github.com/konveyor/controller/pkg/logging"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logging.WithName("directvolume")
+var log = klogr.New().WithName("directvolume")
 
 // Add creates a new DirectVolumeMigration Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -98,7 +98,7 @@ type ReconcileDirectVolumeMigration struct {
 func (r *ReconcileDirectVolumeMigration) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 
 	// Set values
-	log = logging.WithName("directvolume", "dvm", request.Name)
+	log = log.WithName("directvolume").WithValues("dvm", request.Name)
 
 	// Fetch the DirectVolumeMigration instance
 	direct := &migapi.DirectVolumeMigration{}
@@ -116,7 +116,7 @@ func (r *ReconcileDirectVolumeMigration) Reconcile(ctx context.Context, request 
 	// Set MigMigration name key on logger
 	migration, err := direct.GetMigrationForDVM(r)
 	if migration != nil {
-		log.Real = log.WithValues("migMigration", migration.Name)
+		log = log.WithValues("migMigration", migration.Name)
 	}
 
 	// Set up jaeger tracing, add to ctx
@@ -137,7 +137,8 @@ func (r *ReconcileDirectVolumeMigration) Reconcile(ctx context.Context, request 
 	// Validation
 	err = r.validate(ctx, direct)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -147,7 +148,8 @@ func (r *ReconcileDirectVolumeMigration) Reconcile(ctx context.Context, request 
 	if !direct.Status.HasBlockerCondition() {
 		requeueAfter, err = r.migrate(ctx, direct)
 		if err != nil {
-			log.Trace(err)
+			//log.Trace(err)
+			log.Error(err, "")
 			return reconcile.Result{Requeue: true}, nil
 		}
 	}
@@ -165,7 +167,8 @@ func (r *ReconcileDirectVolumeMigration) Reconcile(ctx context.Context, request 
 	direct.MarkReconciled()
 	err = r.Update(context.TODO(), direct)
 	if err != nil {
-		log.Trace(err)
+		//log.Trace(err)
+		log.Error(err, "")
 		return reconcile.Result{Requeue: true}, nil
 	}
 

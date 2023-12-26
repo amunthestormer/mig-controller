@@ -4,13 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
-
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/konveyor/mig-controller/pkg/settings"
 	appsv1 "k8s.io/api/apps/v1"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
@@ -24,7 +17,13 @@ import (
 	dapi "k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2/klogr"
+	"path"
+	"regexp"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var Settings = &settings.Settings
@@ -326,8 +325,7 @@ func (c client) Update(ctx context.Context, in k8sclient.Object, opt ...k8sclien
 
 // Wait until cache contains resource with expected resourceVersion _or_ timeout, whichever comes first.
 func (c client) waitForPopulatedCache(resource k8sclient.Object, expectedRV int) error {
-	log := logging.WithName("compatclient",
-		"func", "waitForPopulatedCache",
+	log := klogr.New().WithName("compatclient").WithValues("func", "waitForPopulatedCache",
 		"resource", path.Join(resource.GetName(), resource.GetNamespace()),
 		"resourceKind", resource.GetObjectKind())
 

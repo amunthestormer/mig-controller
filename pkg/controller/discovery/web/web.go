@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"net/http"
 	"regexp"
 	"sort"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/konveyor/controller/pkg/logging"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/container"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	"github.com/konveyor/mig-controller/pkg/settings"
@@ -26,7 +26,7 @@ import (
 var Settings = &settings.Settings
 
 // Shared logger.
-var Log *logging.Logger
+var Log = klogr.New()
 
 // Root - all routes.
 const (
@@ -340,12 +340,12 @@ func (h *BaseHandler) allow(sar auth.SelfSubjectAccessReview) int {
 	codec := serializer.NewCodecFactory(scheme.Scheme)
 	gvk, err := apiutil.GVKForObject(&sar, scheme.Scheme)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return http.StatusInternalServerError
 	}
 	restClient, err := apiutil.RESTClientForGVK(gvk, false, restCfg, codec)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return http.StatusInternalServerError
 	}
 	var status int

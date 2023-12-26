@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	liberr "github.com/konveyor/controller/pkg/error"
 	"k8s.io/klog"
 	"net/url"
 	"reflect"
@@ -27,7 +28,6 @@ import (
 	"sort"
 	"strings"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	pvdr "github.com/konveyor/mig-controller/pkg/cloudprovider"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/konveyor/mig-controller/pkg/settings"

@@ -285,9 +285,11 @@ func (m *MigCluster) GetClusterConfigMap(c k8sclient.Client) (*corev1.ConfigMap,
 	err := c.Get(context.TODO(), clusterConfigRef, clusterConfig)
 	if err != nil {
 		return nil, liberr.Wrap(err)
+
 	}
 	if clusterConfig.Data == nil {
 		return nil, liberr.Wrap(errors.New("failed to find data in cluster configmap"))
+
 	}
 	return clusterConfig, nil
 }

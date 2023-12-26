@@ -89,28 +89,28 @@ func (r *DataSource) Start(cluster *migapi.MigCluster) error {
 	r.Cluster.With(cluster)
 	err = r.Cluster.Insert(r.Container.Db)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	mark := time.Now()
 	err = r.buildClient(cluster)
 	klog.Info("DataSource New Client is built")
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	connectDuration := time.Since(mark)
 	mark = time.Now()
 	err = r.buildManager(cluster.Name)
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	go r.manager.Start(ctx)
 	for _, collection := range r.Collections {
 		err = collection.Reconcile()
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 			return err
 		}
 	}
@@ -205,7 +205,7 @@ func (r *DataSource) buildClient(cluster *migapi.MigCluster) error {
 	r.RestCfg, err = cluster.BuildRestConfig(r.Container.Client)
 	if err != nil {
 		klog.Infof("BuildClient BuildRestConfig: %v", err)
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 
@@ -216,7 +216,7 @@ func (r *DataSource) buildClient(cluster *migapi.MigCluster) error {
 		})
 	if err != nil {
 		klog.Infof("BuildClient NewClient: %v", err)
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 
@@ -231,7 +231,7 @@ func (r *DataSource) buildManager(name string) error {
 	}
 	r.manager, err = manager.New(r.RestCfg, manager.Options{MetricsBindAddress: "0"})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	dsController, err := controller.New(
@@ -241,13 +241,13 @@ func (r *DataSource) buildManager(name string) error {
 			Reconciler: r,
 		})
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return err
 	}
 	for _, collection := range r.Collections {
 		err := collection.AddWatch(dsController)
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 			return err
 		}
 	}
@@ -260,7 +260,7 @@ func (r *DataSource) applyEvents() {
 	for event := range r.eventChannel {
 		err := event.Apply(r.Container.Db, r.versionThreshold)
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 		}
 	}
 }
@@ -281,7 +281,7 @@ type ModelEvent struct {
 func (r *ModelEvent) Apply(db *sql.DB, versionThreshold uint64) (err error) {
 	tx, err := db.Begin()
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return
 	}
 	defer func() {
@@ -295,7 +295,7 @@ func (r *ModelEvent) Apply(db *sql.DB, versionThreshold uint64) (err error) {
 		if version > versionThreshold {
 			err = r.model.Insert(tx)
 			if err != nil {
-				Log.Trace(err)
+				Log.Error(err, "")
 				return
 			}
 		}
@@ -303,14 +303,14 @@ func (r *ModelEvent) Apply(db *sql.DB, versionThreshold uint64) (err error) {
 		if version > versionThreshold {
 			err = r.model.Update(tx)
 			if err != nil {
-				Log.Trace(err)
+				Log.Error(err, "")
 				return
 			}
 		}
 	case 0x04: // Delete
 		err = r.model.Delete(tx)
 		if err != nil {
-			Log.Trace(err)
+			Log.Error(err, "")
 			return
 		}
 	default:
@@ -318,7 +318,7 @@ func (r *ModelEvent) Apply(db *sql.DB, versionThreshold uint64) (err error) {
 	}
 	err = tx.Commit()
 	if err != nil {
-		Log.Trace(err)
+		Log.Error(err, "")
 		return
 	}
 
