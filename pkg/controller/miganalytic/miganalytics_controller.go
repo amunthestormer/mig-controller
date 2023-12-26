@@ -580,7 +580,7 @@ func pvStorage(self corev1.ResourceList) *resource.Quantity {
 }
 
 func collectResources(client compat.Client) ([]*metav1.APIResourceList, error) {
-	resources, err := client.ServerResources()
+	_, resources, err := client.ServerGroupsAndResources()
 	if err != nil {
 		return nil, err
 	}

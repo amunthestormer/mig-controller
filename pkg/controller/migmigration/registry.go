@@ -3,8 +3,6 @@ package migmigration
 import (
 	"path"
 
-	liberr "github.com/konveyor/controller/pkg/error"
-
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"context"
@@ -179,7 +177,7 @@ func (t *Task) ensureRegistrySecret(client k8sclient.Client) (*kapi.Secret, erro
 		// if for some reason secret was deleted, we need to make sure we redeploy
 		deleteErr := t.deleteImageRegistryDeploymentForClient(client, plan)
 		if deleteErr != nil {
-			return nil, liberr.Wrap(deleteErr)
+			return nil, deleteErr
 		}
 		err = client.Create(context.TODO(), newSecret)
 		if err != nil {
@@ -193,7 +191,7 @@ func (t *Task) ensureRegistrySecret(client k8sclient.Client) (*kapi.Secret, erro
 	// secret is not same, we need to redeploy
 	deleteErr := t.deleteImageRegistryDeploymentForClient(client, plan)
 	if deleteErr != nil {
-		return nil, liberr.Wrap(deleteErr)
+		return nil, deleteErr
 	}
 	err = plan.UpdateRegistrySecret(t.Client, storage, foundSecret)
 	if err != nil {

@@ -15,7 +15,6 @@ import (
 
 	auth "k8s.io/api/authorization/v1"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -535,22 +534,22 @@ func (r ReconcileMigCluster) isCrossVersionCompatible(semverA string, semverB st
 func (r ReconcileMigCluster) parseOperatorSemVer(version string) (major int, minor int, bugfix int, err error) {
 	tokens := strings.Split(version, ".")
 	if len(tokens) != 3 {
-		return -1, -1, -1, liberr.Wrap(fmt.Errorf("version string was not in semver format, != 3 tokens"))
+		return -1, -1, -1, fmt.Errorf("version string was not in semver format, != 3 tokens")
 	}
 
 	major, err = strconv.Atoi(tokens[0])
 	if err != nil {
-		return -1, -1, -1, liberr.Wrap(fmt.Errorf("major version could not be parsed as integer"))
+		return -1, -1, -1, fmt.Errorf("major version could not be parsed as integer")
 	}
 
 	minor, err = strconv.Atoi(tokens[1])
 	if err != nil {
-		return -1, -1, -1, liberr.Wrap(fmt.Errorf("minor version could not be parsed as integer"))
+		return -1, -1, -1, fmt.Errorf("minor version could not be parsed as integer")
 	}
 
 	bugfix, err = strconv.Atoi(tokens[2])
 	if err != nil {
-		return -1, -1, -1, liberr.Wrap(fmt.Errorf("bugfix version could not be parsed as integer"))
+		return -1, -1, -1, fmt.Errorf("bugfix version could not be parsed as integer")
 	}
 
 	return major, minor, bugfix, nil

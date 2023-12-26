@@ -71,20 +71,21 @@ func ZapLoggerTo(destWriter io.Writer, development bool) logr.Logger {
 }
 
 // SetLogger sets a concrete logging implementation for all deferred Loggers.
-func SetLogger(l logr.Logger) {
+func SetLogger(l logr.LogSink) {
 	Log.Fulfill(l)
 }
 
 // Log is the base logger used by kubebuilder.  It delegates
 // to another logr.Logger.  You *must* call SetLogger to
 // get any actual logging.
-var Log = logf.NewDelegatingLogger(logf.NullLogger{})
+var Log = logf.NewDelegatingLogSink(logf.NullLogSink{})
 
 // KBLog is a base parent logger.
-var KBLog logr.Logger
+var KBLog logr.LogSink
 
 func init() {
 	KBLog = Log.WithName("kubebuilder")
+
 }
 
 func EpochMillisRoundedTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {

@@ -3,8 +3,6 @@ package errorutil
 import (
 	"fmt"
 	"testing"
-
-	liberr "github.com/konveyor/controller/pkg/error"
 )
 
 func TestUnwrap(t *testing.T) {
@@ -18,7 +16,7 @@ func TestUnwrap(t *testing.T) {
 	}{
 		{
 			name:    "test when Unwrap is implemented",
-			args:    args{err: liberr.Wrap(fmt.Errorf("wrap is implemented"))},
+			args:    args{err: fmt.Errorf("wrap is implemented")},
 			wantErr: true,
 		},
 		{

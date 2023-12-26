@@ -170,7 +170,7 @@ type ReconcileMigMigration struct {
 func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
 	// Set values.
-	log = log.WithName("migration").WithValues("migMigration", request.Name)
+	log.WithName("migration").WithValues("migMigration", request.Name)
 
 	// Retrieve the MigMigration being reconciled
 	migration := &migapi.MigMigration{}
