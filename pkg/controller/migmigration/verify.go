@@ -7,7 +7,6 @@ import (
 
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	health "github.com/konveyor/mig-controller/pkg/health"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,19 +21,19 @@ func (t *Task) VerificationCompleted() (bool, error) {
 
 	client, err := t.getDestinationClient()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	// Collect and update info about unhealthy pods
 	err = t.updateResourcesHealth(client)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	// Check that all pods are recreated
 	finished, err := t.podsRecreated(client)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	if !finished {
 		// Stop when unhealthy resources were confirmed
@@ -98,12 +97,12 @@ func (t *Task) podsRecreated(client k8sclient.Client) (bool, error) {
 
 		finished, err := health.DaemonSetsRecreated(client, &options)
 		if err != nil || !finished {
-			return finished, liberr.Wrap(err)
+			return finished, err
 		}
 
 		finished, err = health.PodManagersRecreated(client, &options)
 		if err != nil || !finished {
-			return finished, liberr.Wrap(err)
+			return finished, err
 		}
 	}
 
@@ -131,7 +130,7 @@ func (t *Task) startRefresh() (bool, error) {
 
 	plan, err := t.Owner.GetPlan(t.Client)
 	if err != nil {
-		return started, liberr.Wrap(err)
+		return started, err
 	}
 	plan.Spec.Refresh = true
 	err = t.Client.Update(context.TODO(), plan)
@@ -139,7 +138,7 @@ func (t *Task) startRefresh() (bool, error) {
 		if errors.IsConflict(err) {
 			return started, nil
 		}
-		return started, liberr.Wrap(err)
+		return started, err
 	}
 
 	started = true

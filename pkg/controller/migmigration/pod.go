@@ -5,7 +5,6 @@ import (
 	"k8s.io/klog"
 	"path"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	pvdr "github.com/konveyor/mig-controller/pkg/cloudprovider"
 	migevent "github.com/konveyor/mig-controller/pkg/event"
@@ -22,7 +21,7 @@ import (
 func (t *Task) shouldResticRestart() (bool, error) {
 	client, err := t.getSourceClient()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	// Default to running ResticRestart on 3.7, 3.9.
@@ -54,7 +53,7 @@ func (t *Task) restartResticPods() error {
 	t.Log.Info("Checking if Restic Restart is required.")
 	runRestart, err := t.shouldResticRestart()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if !runRestart {
 		t.Log.Info("Restic restart was not required. Skipping.")
@@ -63,7 +62,7 @@ func (t *Task) restartResticPods() error {
 
 	client, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	list := corev1.PodList{}
@@ -80,7 +79,7 @@ func (t *Task) restartResticPods() error {
 			LabelSelector: selector,
 		})
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	for _, pod := range list.Items {
@@ -95,7 +94,7 @@ func (t *Task) restartResticPods() error {
 			context.TODO(),
 			&pod)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -107,7 +106,7 @@ func (t *Task) haveResticPodsStarted() (bool, error) {
 	// Verify restic restart is needed before proceeding
 	runRestart, err := t.shouldResticRestart()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	if !runRestart {
 		return true, nil
@@ -115,7 +114,7 @@ func (t *Task) haveResticPodsStarted() (bool, error) {
 
 	client, err := t.getSourceClient()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	list := corev1.PodList{}
@@ -133,7 +132,7 @@ func (t *Task) haveResticPodsStarted() (bool, error) {
 			LabelSelector: selector,
 		})
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	t.Log.Info("Getting list of Restic Pods on source cluster")
@@ -145,7 +144,7 @@ func (t *Task) haveResticPodsStarted() (bool, error) {
 		},
 		&ds)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	for _, pod := range list.Items {
@@ -186,7 +185,7 @@ func (t *Task) restartVeleroPods() error {
 	if t.Owner.Status.HasCondition(StaleSrcVeleroCRsDeleted) {
 		err := t.deleteVeleroPodsForCluster(t.PlanResources.SrcMigCluster)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	} else {
 		t.Log.Info("Velero Pod restart not required on source cluster " +
@@ -196,7 +195,7 @@ func (t *Task) restartVeleroPods() error {
 	if t.Owner.Status.HasCondition(StaleDestVeleroCRsDeleted) {
 		err := t.deleteVeleroPodsForCluster(t.PlanResources.DestMigCluster)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	} else {
 		t.Log.Info("Velero Pod restart not required on destination cluster " +
@@ -208,11 +207,11 @@ func (t *Task) restartVeleroPods() error {
 func (t *Task) deleteVeleroPodsForCluster(cluster *migapi.MigCluster) error {
 	veleroPods, err := t.findVeleroPods(cluster)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	clusterClient, err := cluster.GetClient(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, pod := range veleroPods {
 		if pod.Status.Phase != corev1.PodRunning {
@@ -228,7 +227,7 @@ func (t *Task) deleteVeleroPodsForCluster(cluster *migapi.MigCluster) error {
 			context.TODO(),
 			&pod)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -243,7 +242,7 @@ func (t *Task) haveVeleroPodsStarted() (bool, error) {
 
 	clients, err := t.getBothClients()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	for _, client := range clients {
 		list := corev1.PodList{}
@@ -259,7 +258,7 @@ func (t *Task) haveVeleroPodsStarted() (bool, error) {
 				LabelSelector: selector,
 			})
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		err = client.Get(
@@ -270,7 +269,7 @@ func (t *Task) haveVeleroPodsStarted() (bool, error) {
 			},
 			&deployment)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		for _, pod := range list.Items {
@@ -312,7 +311,7 @@ func (t *Task) haveVeleroPodsStarted() (bool, error) {
 func (t *Task) findVeleroPods(cluster *migapi.MigCluster) ([]corev1.Pod, error) {
 	client, err := cluster.GetClient(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return pods.FindVeleroPods(client)
 }
@@ -322,7 +321,7 @@ func (t *Task) findVeleroPods(cluster *migapi.MigCluster) ([]corev1.Pod, error) 
 func (t *Task) veleroPodCredSecretPropagated(cluster *migapi.MigCluster) (bool, error) {
 	list, err := t.findVeleroPods(cluster)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	if len(list) == 0 {
 		t.Log.Info("No velero pods found on MigCluster "+
@@ -332,12 +331,12 @@ func (t *Task) veleroPodCredSecretPropagated(cluster *migapi.MigCluster) (bool, 
 	}
 	restCfg, err := cluster.BuildRestConfig(t.Client)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	for _, pod := range list {
 		storage, err := t.PlanResources.MigPlan.GetStorage(t.Client)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		bslProvider := storage.GetBackupStorageProvider()
@@ -365,16 +364,16 @@ func (t *Task) veleroPodCredSecretPropagated(cluster *migapi.MigCluster) (bool, 
 						cmd.Args)
 					return true, nil
 				} else {
-					return false, liberr.Wrap(err)
+					return false, err
 				}
 			}
 			client, err := cluster.GetClient(t.Client)
 			if err != nil {
-				return false, liberr.Wrap(err)
+				return false, err
 			}
 			secret, err := t.PlanResources.MigPlan.GetCloudSecret(client, provider)
 			if err != nil {
-				return false, liberr.Wrap(err)
+				return false, err
 			}
 			if body, found := secret.Data["cloud"]; found {
 				a := string(body)
@@ -400,7 +399,7 @@ func (t *Task) veleroCloudSecret(cluster *migapi.MigCluster) (bool, error) {
 	}
 	storage, err := t.PlanResources.MigPlan.GetStorage(t.Client)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	bslProvider := storage.GetBackupStorageProvider()
@@ -409,11 +408,11 @@ func (t *Task) veleroCloudSecret(cluster *migapi.MigCluster) (bool, error) {
 		secret, err := t.PlanResources.MigPlan.GetCloudSecret(client, provider)
 		if err != nil {
 			klog.Errorf("GetCloudSecret: %v", err.Error())
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		if secret == nil {
 			klog.Error("GetCloudSecret is nil")
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 	}

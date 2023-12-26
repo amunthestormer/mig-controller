@@ -22,7 +22,6 @@ import (
 	"path"
 	"reflect"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -53,16 +52,16 @@ func (r ReconcileDirectImageMigration) validate(ctx context.Context, imageMigrat
 	}
 	err := r.validateSrcCluster(ctx, imageMigration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateDestCluster(ctx, imageMigration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	// Migrated namespaces.
 	err = r.validateNamespaces(ctx, imageMigration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -88,7 +87,7 @@ func (r ReconcileDirectImageMigration) validateSrcCluster(ctx context.Context, i
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Not found
@@ -161,7 +160,7 @@ func (r ReconcileDirectImageMigration) validateDestCluster(ctx context.Context, 
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Not found
@@ -221,14 +220,14 @@ func (r ReconcileDirectImageMigration) validateNamespaces(ctx context.Context, i
 	}
 	srcCluster, err := imageMigration.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if srcCluster == nil || !srcCluster.Status.IsReady() {
 		return nil
 	}
 	srcClient, err := srcCluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	ns := kapi.Namespace{}
 	notFound := make([]string, 0)
@@ -240,7 +239,7 @@ func (r ReconcileDirectImageMigration) validateNamespaces(ctx context.Context, i
 		if k8serror.IsNotFound(err) {
 			notFound = append(notFound, nsName)
 		} else {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	if len(notFound) > 0 {

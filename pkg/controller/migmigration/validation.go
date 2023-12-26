@@ -7,7 +7,6 @@ import (
 	"path"
 	"sort"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	migevent "github.com/konveyor/mig-controller/pkg/event"
@@ -81,21 +80,21 @@ func (r ReconcileMigMigration) validate(ctx context.Context, migration *migapi.M
 	plan, err := r.validatePlan(ctx, migration)
 	if err != nil {
 		log.V(4).Error(err, "Validation check for attached plan failed")
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Validate spec fields
 	err = r.validateMigrationType(ctx, plan, migration)
 	if err != nil {
 		log.V(4).Error(err, "Validation of migration spec fields failed")
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Final migration.
 	err = r.validateFinalMigration(ctx, plan, migration)
 	if err != nil {
 		log.V(4).Error(err, "Validation check for existing final migration failed")
-		return liberr.Wrap(err)
+		return err
 
 	}
 
@@ -103,7 +102,7 @@ func (r ReconcileMigMigration) validate(ctx context.Context, migration *migapi.M
 	err = r.validateRegistriesRunning(ctx, migration)
 	if err != nil {
 		log.V(4).Error(err, "Validation of running registries failed")
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil
@@ -156,7 +155,7 @@ func (r ReconcileMigMigration) validateMigrationType(ctx context.Context, plan *
 	// run validations specific to intra-cluster migrations
 	isIntraCluster, err := plan.IsIntraCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if isIntraCluster {
 		// find conflicts between source and destination namespaces
@@ -369,7 +368,7 @@ func (r ReconcileMigMigration) validateRegistriesRunning(ctx context.Context, mi
 	if migration.Status.HasAnyCondition(RegistriesHealthy, RegistriesUnhealthy) {
 		nEnsured, message, err := ensureRegistryHealth(r.Client, migration)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if nEnsured != 2 {
 			log.Info(fmt.Sprintf("Found %v/2 registries in healthy condition. Registries are unhealthy.", nEnsured), "message", message)
@@ -411,15 +410,15 @@ func ensureRegistryHealth(c k8sclient.Client, migration *migapi.MigMigration) (i
 
 	plan, err := migration.GetPlan(c)
 	if err != nil {
-		return 0, "", liberr.Wrap(err)
+		return 0, "", err
 	}
 	srcCluster, err := plan.GetSourceCluster(c)
 	if err != nil {
-		return 0, "", liberr.Wrap(err)
+		return 0, "", err
 	}
 	destCluster, err := plan.GetDestinationCluster(c)
 	if err != nil {
-		return 0, "", liberr.Wrap(err)
+		return 0, "", err
 	}
 
 	clusters := []*migapi.MigCluster{srcCluster, destCluster}
@@ -431,13 +430,13 @@ func ensureRegistryHealth(c k8sclient.Client, migration *migapi.MigMigration) (i
 
 		client, err := cluster.GetClient(c)
 		if err != nil {
-			return nEnsured, "", liberr.Wrap(err)
+			return nEnsured, "", err
 		}
 
 		registryPods, err := getRegistryPods(plan, client)
 		if err != nil {
 			log.Error(err, "")
-			return nEnsured, "", liberr.Wrap(err)
+			return nEnsured, "", err
 		}
 
 		for _, pod := range registryPods.Items {

@@ -2,7 +2,6 @@ package directvolumemigration
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/settings"
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +32,7 @@ func (t *Task) createDestinationPVCs() error {
 
 	migration, err := t.Owner.GetMigrationForDVM(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	migrationUID := ""
 	if migration != nil {

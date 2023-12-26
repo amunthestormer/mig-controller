@@ -21,7 +21,6 @@ import (
 	"path"
 	"sync"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/konveyor/mig-controller/pkg/pods"
 	corev1 "k8s.io/api/core/v1"
@@ -116,7 +115,7 @@ func (r *ResticDFCommandExecutor) loadResticPodReferences() error {
 		client.MatchingLabels(map[string]string{ResticPodLabelKey: ResticPodLabelValue}),
 	)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for i := range resticPodList.Items {
 		if resticPodList.Items[i].Spec.NodeName != "" {
@@ -137,7 +136,7 @@ func (r *ResticDFCommandExecutor) Execute(pvcNodeMap map[string][]MigAnalyticPer
 	gatheredDuData := []DUOutput{}
 	err := r.loadResticPodReferences()
 	if err != nil {
-		return gatheredDfData, gatheredDuData, liberr.Wrap(err)
+		return gatheredDfData, gatheredDuData, err
 	}
 	// dfOutputs for n nodes
 	dfOutputs := make(map[string]DfDu, len(pvcNodeMap))

@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
@@ -94,7 +95,7 @@ func (r *DirectImageStreamMigration) GetStored() ([]model.Model, error) {
 //
 
 func (r *DirectImageStreamMigration) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*migapi.DirectImageStreamMigration)
 	if !cast {
 		return false
@@ -107,7 +108,7 @@ func (r *DirectImageStreamMigration) Create(e event.CreateEvent) bool {
 }
 
 func (r *DirectImageStreamMigration) Update(e event.UpdateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.ObjectNew.(*migapi.DirectImageStreamMigration)
 	if !cast {
 		return false
@@ -120,7 +121,7 @@ func (r *DirectImageStreamMigration) Update(e event.UpdateEvent) bool {
 }
 
 func (r *DirectImageStreamMigration) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*migapi.DirectImageStreamMigration)
 	if !cast {
 		return false

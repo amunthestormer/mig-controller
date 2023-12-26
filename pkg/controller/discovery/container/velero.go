@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -101,7 +102,7 @@ func (r *Backup) GetStored() ([]model.Model, error) {
 //
 
 func (r *Backup) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.Backup)
 	if !cast {
 		return false
@@ -118,7 +119,7 @@ func (r *Backup) Create(e event.CreateEvent) bool {
 }
 
 func (r *Backup) Update(e event.UpdateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.ObjectNew.(*velero.Backup)
 	if !cast {
 		return false
@@ -135,7 +136,7 @@ func (r *Backup) Update(e event.UpdateEvent) bool {
 }
 
 func (r *Backup) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.Backup)
 	if !cast {
 		return false
@@ -245,7 +246,7 @@ func (r *Restore) GetStored() ([]model.Model, error) {
 //
 
 func (r *Restore) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.Restore)
 	if !cast {
 		return false
@@ -262,7 +263,7 @@ func (r *Restore) Create(e event.CreateEvent) bool {
 }
 
 func (r *Restore) Update(e event.UpdateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.ObjectNew.(*velero.Restore)
 	if !cast {
 		return false
@@ -279,7 +280,7 @@ func (r *Restore) Update(e event.UpdateEvent) bool {
 }
 
 func (r *Restore) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.Restore)
 	if !cast {
 		return false
@@ -389,7 +390,7 @@ func (r *PodVolumeBackup) GetStored() ([]model.Model, error) {
 //
 
 func (r *PodVolumeBackup) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.PodVolumeBackup)
 	if !cast {
 		return false
@@ -406,7 +407,7 @@ func (r *PodVolumeBackup) Create(e event.CreateEvent) bool {
 }
 
 func (r *PodVolumeBackup) Update(e event.UpdateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.ObjectNew.(*velero.PodVolumeBackup)
 	if !cast {
 		return false
@@ -423,7 +424,7 @@ func (r *PodVolumeBackup) Update(e event.UpdateEvent) bool {
 }
 
 func (r *PodVolumeBackup) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.PodVolumeBackup)
 	if !cast {
 		return false
@@ -533,7 +534,7 @@ func (r *PodVolumeRestore) GetStored() ([]model.Model, error) {
 //
 
 func (r *PodVolumeRestore) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.PodVolumeRestore)
 	if !cast {
 		return false
@@ -550,7 +551,7 @@ func (r *PodVolumeRestore) Create(e event.CreateEvent) bool {
 }
 
 func (r *PodVolumeRestore) Update(e event.UpdateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.ObjectNew.(*velero.PodVolumeRestore)
 	if !cast {
 		return false
@@ -567,7 +568,7 @@ func (r *PodVolumeRestore) Update(e event.UpdateEvent) bool {
 }
 
 func (r *PodVolumeRestore) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*velero.PodVolumeRestore)
 	if !cast {
 		return false

@@ -17,7 +17,6 @@ limitations under the License.
 package directimagestreammigration
 
 import (
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	"github.com/konveyor/mig-controller/pkg/settings"
@@ -44,7 +43,7 @@ func (r *ReconcileDirectImageStreamMigration) initTracer(dism migapi.DirectImage
 		if errors.IsNotFound(errorutil.Unwrap(err)) {
 			return nil, nil
 		}
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if dim == nil {
 		return nil, nil
@@ -55,7 +54,7 @@ func (r *ReconcileDirectImageStreamMigration) initTracer(dism migapi.DirectImage
 		if errors.IsNotFound(errorutil.Unwrap(err)) {
 			return nil, nil
 		}
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if migration == nil {
 		return nil, nil

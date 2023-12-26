@@ -46,10 +46,10 @@ var log = klogr.New()
 var Settings = &settings.Settings
 
 func init() {
-	log = log.WithName("discovery")
-	model.Log = log.WithName("discovery")
-	container.Log = log.WithName("discovery")
-	web.Log = log.WithName("discovery")
+	klogr.New().WithName("discovery")
+	model.Log.WithName("discovery")
+	container.Log.WithName("discovery")
+	web.Log.WithName("discovery")
 }
 
 func Add(mgr manager.Manager) error {

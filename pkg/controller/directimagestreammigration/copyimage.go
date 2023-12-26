@@ -1,11 +1,10 @@
 package directimagestreammigration
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 
 	"github.com/containers/image/v5/copy"
 	"github.com/containers/image/v5/types"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/konveyor/openshift-velero-plugin/velero-plugins/imagecopy"
 )
@@ -13,62 +12,62 @@ import (
 func (t *Task) migrateInternalImages() error {
 	imageStream, err := t.Owner.GetImageStream(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	srcCluster, err := t.Owner.GetSourceCluster(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	destCluster, err := t.Owner.GetDestinationCluster(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	srcInternalRegistry, err := srcCluster.GetInternalRegistryPath(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if srcInternalRegistry == "" {
-		return liberr.Wrap(errors.New("Source cluster internal registry path not found"))
+		return errors.New("Source cluster internal registry path not found")
 	}
 
 	srcRegistry, err := srcCluster.GetRegistryPath(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if srcRegistry == "" {
-		return liberr.Wrap(errors.New("Source cluster registry path not found"))
+		return errors.New("Source cluster registry path not found")
 	}
 
 	destRegistry, err := destCluster.GetRegistryPath(t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if destRegistry == "" {
-		return liberr.Wrap(errors.New("Source cluster registry path not found"))
+		return errors.New("Source cluster registry path not found")
 	}
 
 	destNamespace := t.Owner.GetDestinationNamespace()
 	if destNamespace == "" {
-		return liberr.Wrap(errors.New("Destination namespace not found"))
+		return errors.New("Destination namespace not found")
 	}
 
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	sourceCtx, err := internalRegistrySystemContext(srcClient)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	destClient, err := t.getDestinationClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	destinationCtx, err := internalRegistrySystemContext(destClient)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return imagecopy.CopyLocalImageStreamImages(*imageStream,

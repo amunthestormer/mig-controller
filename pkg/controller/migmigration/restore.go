@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/pkg/errors"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
@@ -24,7 +23,7 @@ import (
 func (t *Task) ensureFinalRestore() (*velero.Restore, error) {
 	backup, err := t.getInitialBackup()
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if backup == nil {
 		return nil, errors.New("Backup not found")
@@ -32,7 +31,7 @@ func (t *Task) ensureFinalRestore() (*velero.Restore, error) {
 
 	restore, err := t.getFinalRestore()
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if restore != nil {
 		return restore, nil
@@ -44,7 +43,7 @@ func (t *Task) ensureFinalRestore() (*velero.Restore, error) {
 	}
 	newRestore, err := t.buildRestore(client, backup.Name, "final")
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	newRestore.Labels[migapi.FinalRestoreLabel] = t.UID()
 	newRestore.Labels[migapi.MigMigrationDebugLabel] = t.Owner.Name
@@ -56,7 +55,7 @@ func (t *Task) ensureFinalRestore() (*velero.Restore, error) {
 		"restore", path.Join(newRestore.Namespace, newRestore.Name))
 	err = client.Create(context.TODO(), newRestore)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return newRestore, nil
 }
@@ -73,7 +72,7 @@ func (t *Task) getFinalRestore() (*velero.Restore, error) {
 func (t *Task) ensureStageRestore() (*velero.Restore, error) {
 	backup, err := t.getStageBackup()
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if backup == nil {
 		return nil, errors.New("Backup not found")
@@ -81,7 +80,7 @@ func (t *Task) ensureStageRestore() (*velero.Restore, error) {
 
 	restore, err := t.getStageRestore()
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if restore != nil {
 		return restore, nil
@@ -93,7 +92,7 @@ func (t *Task) ensureStageRestore() (*velero.Restore, error) {
 	}
 	newRestore, err := t.buildRestore(client, backup.Name, "stage")
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	newRestore.Labels[migapi.StageRestoreLabel] = t.UID()
 	newRestore.Labels[migapi.MigMigrationDebugLabel] = t.Owner.Name
@@ -102,12 +101,12 @@ func (t *Task) ensureStageRestore() (*velero.Restore, error) {
 	newRestore.Labels[migapi.MigPlanLabel] = string(t.PlanResources.MigPlan.UID)
 	stagePodImage, err := t.getStagePodImage(client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	newRestore.Annotations[migapi.StagePodImageAnnotation] = stagePodImage
 	err = client.Create(context.TODO(), newRestore)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return newRestore, nil
 }
@@ -422,7 +421,7 @@ func (t *Task) setFinalRestorePartialFailureWarning(restore *velero.Restore) {
 func (t *Task) buildRestore(client k8sclient.Client, backupName string, restoreTypePrefix string) (*velero.Restore, error) {
 	annotations, err := t.getAnnotations(client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	// Construct a name like "$migrationname-54823-stage" or "$migrationname-54823-final".
@@ -478,7 +477,7 @@ func (t *Task) updateNamespaceMapping(restore *velero.Restore) {
 func (t *Task) deleteCorrelatedRestores() error {
 	client, err := t.getDestinationClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	list := velero.RestoreList{}
@@ -487,7 +486,7 @@ func (t *Task) deleteCorrelatedRestores() error {
 		&list,
 		k8sclient.MatchingLabels(t.PlanResources.MigPlan.GetCorrelationLabels()))
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, restore := range list.Items {
 		t.Log.Info("Deleting Velero Restore on target cluster "+
@@ -495,7 +494,7 @@ func (t *Task) deleteCorrelatedRestores() error {
 			"restore", path.Join(restore.Namespace, restore.Name))
 		err = client.Delete(context.TODO(), &restore)
 		if err != nil && !k8serror.IsNotFound(err) {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -512,7 +511,7 @@ func (t *Task) deleteStaleRestoresOnCluster(cluster *migapi.MigCluster) (int, in
 
 	clusterClient, err := cluster.GetClient(t.Client)
 	if err != nil {
-		return 0, 0, liberr.Wrap(err)
+		return 0, 0, err
 	}
 
 	list := velero.RestoreList{}
@@ -521,7 +520,7 @@ func (t *Task) deleteStaleRestoresOnCluster(cluster *migapi.MigCluster) (int, in
 		&list,
 		k8sclient.InNamespace(migapi.VeleroNamespace))
 	if err != nil {
-		return 0, 0, liberr.Wrap(err)
+		return 0, 0, err
 	}
 	for _, restore := range list.Items {
 		// Skip delete unless phase is "", "New" or "InProgress"
@@ -546,7 +545,7 @@ func (t *Task) deleteStaleRestoresOnCluster(cluster *migapi.MigCluster) (int, in
 		// Skip if correlation label points to an existing, running migration
 		isRunning, err := t.migrationUIDisRunning(migMigrationUID)
 		if err != nil {
-			return nDeleted, nInProgressDeleted, liberr.Wrap(err)
+			return nDeleted, nInProgressDeleted, err
 		}
 		if isRunning {
 			t.Log.Info("Restore is running. Skipping deletion.",
@@ -561,7 +560,7 @@ func (t *Task) deleteStaleRestoresOnCluster(cluster *migapi.MigCluster) (int, in
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		err = clusterClient.Delete(context.TODO(), &restore)
 		if err != nil && !k8serror.IsNotFound(err) {
-			return nDeleted, nInProgressDeleted, liberr.Wrap(err)
+			return nDeleted, nInProgressDeleted, err
 		}
 		nDeleted++
 		// Separate count for InProgress, used to determine if restart needed
@@ -581,7 +580,7 @@ func (t *Task) deleteStalePVRsOnCluster(cluster *migapi.MigCluster) (int, error)
 	nDeleted := 0
 	clusterClient, err := cluster.GetClient(t.Client)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 
 	list := velero.PodVolumeRestoreList{}
@@ -590,7 +589,7 @@ func (t *Task) deleteStalePVRsOnCluster(cluster *migapi.MigCluster) (int, error)
 		&list,
 		k8sclient.InNamespace(migapi.VeleroNamespace))
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 	for _, pvr := range list.Items {
 		// Skip delete unless phase is "", "New" or "InProgress"
@@ -623,7 +622,7 @@ func (t *Task) deleteStalePVRsOnCluster(cluster *migapi.MigCluster) (int, error)
 				&restore,
 			)
 			if err != nil {
-				return nDeleted, liberr.Wrap(err)
+				return nDeleted, err
 			}
 			// Skip delete if missing a migmigration correlation label (only delete our own CRs)
 			// Example 'migmigration: 4c9d317f-f410-430b-af8f-4ecd7d17a7de'
@@ -638,7 +637,7 @@ func (t *Task) deleteStalePVRsOnCluster(cluster *migapi.MigCluster) (int, error)
 			}
 			isRunning, err := t.migrationUIDisRunning(migMigrationUID)
 			if err != nil {
-				return nDeleted, liberr.Wrap(err)
+				return nDeleted, err
 			}
 			if isRunning {
 				pvrHasRunningMigration = true
@@ -659,7 +658,7 @@ func (t *Task) deleteStalePVRsOnCluster(cluster *migapi.MigCluster) (int, error)
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		err = clusterClient.Delete(context.TODO(), &pvr)
 		if err != nil && !k8serror.IsNotFound(err) {
-			return nDeleted, liberr.Wrap(err)
+			return nDeleted, err
 		}
 		nDeleted++
 	}

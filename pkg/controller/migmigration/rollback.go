@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/gvk"
 	corev1 "k8s.io/api/core/v1"
@@ -19,17 +18,17 @@ func (t *Task) deleteMigrated() error {
 	// Delete 'deployer' and 'hooks' Pods that DeploymentConfig leaves behind upon DC deletion.
 	//err := t.deleteDeploymentConfigLeftoverPods()
 	//if err != nil {
-	//	return liberr.Wrap(err)
+	//	return err
 	//}
 
 	err := t.deleteMigratedNamespaceScopedResources()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	err = t.deleteMovedNfsPVs()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil
@@ -45,7 +44,7 @@ func (t *Task) deleteMigrated() error {
 //	for _, ns := range t.destinationNamespaces() {
 //		destClient, err := t.getDestinationClient()
 //		if err != nil {
-//			return liberr.Wrap(err)
+//			return err
 //		}
 //		// Iterate over all DeploymentConfigs belonging migrated by current MigPlan in target cluster namespaces
 //		dcList := ocapi.DeploymentConfigList{}
@@ -56,7 +55,7 @@ func (t *Task) deleteMigrated() error {
 //			k8sclient.MatchingLabels(map[string]string{migapi.MigPlanLabel: string(t.PlanResources.MigPlan.UID)}),
 //		)
 //		if err != nil {
-//			return liberr.Wrap(err)
+//			return err
 //		}
 //		for _, dc := range dcList.Items {
 //			// Iterate over ReplicationControllers associated with DCs
@@ -68,7 +67,7 @@ func (t *Task) deleteMigrated() error {
 //				k8sclient.MatchingLabels(map[string]string{"openshift.io/deployment-config.name": dc.GetName()}),
 //			)
 //			if err != nil {
-//				return liberr.Wrap(err)
+//				return err
 //			}
 //			for _, rc := range rcList.Items {
 //				// Delete Deployer Pod(s) for RC
@@ -87,7 +86,7 @@ func (t *Task) deleteMigrated() error {
 //						"deploymentConfig", path.Join(dc.Namespace, dc.Name))
 //					err = destClient.Delete(context.TODO(), &pod)
 //					if err != nil {
-//						return liberr.Wrap(err)
+//						return err
 //					}
 //				}
 //
@@ -98,7 +97,7 @@ func (t *Task) deleteMigrated() error {
 //					"deploymentConfig", path.Join(dc.Namespace, dc.Name))
 //				err = destClient.Delete(context.TODO(), &rc)
 //				if err != nil {
-//					return liberr.Wrap(err)
+//					return err
 //				}
 //			}
 //			// Pods belonging to Paused DCs dont get automatically removed either.
@@ -117,7 +116,7 @@ func (t *Task) deleteMigrated() error {
 //						"deploymentConfig", path.Join(dc.Namespace, dc.Name))
 //					err = destClient.Delete(context.TODO(), &pod)
 //					if err != nil {
-//						return liberr.Wrap(err)
+//						return err
 //					}
 //				}
 //			}
@@ -132,7 +131,7 @@ func (t *Task) deleteMigratedNamespaceScopedResources() error {
 		"MigPlan associated resources to delete.")
 	client, GVRs, err := gvk.GetNamespacedGVRsForCluster(t.PlanResources.DestMigCluster, t.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	clientListOptions := k8sclient.ListOptions{}
@@ -155,11 +154,11 @@ func (t *Task) deleteMigratedNamespaceScopedResources() error {
 				continue
 			}
 			if !k8serror.IsMethodNotSupported(err) && !k8serror.IsNotFound(err) {
-				return liberr.Wrap(err)
+				return err
 			}
 			list, err := client.Resource(gvr).Namespace(ns).List(context.Background(), *listOptions)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			for _, r := range list.Items {
 				// delete any dependent resources
@@ -188,7 +187,7 @@ func (t *Task) deleteMovedNfsPVs() error {
 	t.Log.Info("Starting deletion of any 'moved' NFS PVs from destination cluster")
 	dstClient, err := t.getDestinationClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Only delete PVs with matching 'migrated-by-migplan' label.
@@ -231,7 +230,7 @@ func (t *Task) ensureMigratedResourcesDeleted() (bool, error) {
 		"resources have finished deleting.")
 	client, GVRs, err := gvk.GetNamespacedGVRsForCluster(t.PlanResources.DestMigCluster, t.Client)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	clientListOptions := k8sclient.ListOptions{}
@@ -247,7 +246,7 @@ func (t *Task) ensureMigratedResourcesDeleted() (bool, error) {
 				"gvk", gvkCombinedName, "namespace", ns)
 			list, err := client.Resource(gvr).Namespace(ns).List(context.Background(), *listOptions)
 			if err != nil {
-				return false, liberr.Wrap(err)
+				return false, err
 			}
 			// Wait for resources with deletion timestamps
 			if len(list.Items) > 0 {

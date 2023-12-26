@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/pkg/errors"
 
 	imagev1 "github.com/openshift/api/image/v1"
@@ -90,7 +89,7 @@ func (r *DirectImageStreamMigration) GetDIMforDISM(client k8sclient.Client) (*Di
 		ownerRef := types.NamespacedName{Name: ownerRef.Name, Namespace: r.Namespace}
 		err := client.Get(context.TODO(), ownerRef, owner)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		return owner, nil
 	}
@@ -101,14 +100,14 @@ func (r *DirectImageStreamMigration) GetDIMforDISM(client k8sclient.Client) (*Di
 func (r *DirectImageStreamMigration) GetMigrationForDISM(client k8sclient.Client) (*MigMigration, error) {
 	dim, err := r.GetDIMforDISM(client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if dim == nil {
 		return nil, nil
 	}
 	migration, err := dim.GetMigrationForDIM(client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return migration, nil
 }

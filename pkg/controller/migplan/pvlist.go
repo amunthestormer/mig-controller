@@ -3,7 +3,6 @@ package migplan
 import (
 	"context"
 	"fmt"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"path"
 	"regexp"
 	"strings"
@@ -54,7 +53,7 @@ func (r *ReconcileMigPlan) updatePvs(ctx context.Context, plan *migapi.MigPlan) 
 	// Get srcMigCluster
 	srcMigCluster, err := plan.GetSourceCluster(r.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if srcMigCluster == nil || !srcMigCluster.Status.IsReady() {
 		return nil
@@ -62,13 +61,13 @@ func (r *ReconcileMigPlan) updatePvs(ctx context.Context, plan *migapi.MigPlan) 
 
 	srcClient, err := srcMigCluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Get destMigCluster
 	destMigCluster, err := plan.GetDestinationCluster(r.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if destMigCluster == nil || !destMigCluster.Status.IsReady() {
 		return nil
@@ -76,19 +75,19 @@ func (r *ReconcileMigPlan) updatePvs(ctx context.Context, plan *migapi.MigPlan) 
 
 	destClient, err := destMigCluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Get StorageClasses
 	srcStorageClasses, err := srcMigCluster.GetStorageClasses(srcClient)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	plan.Status.SrcStorageClasses = srcStorageClasses
 
 	destStorageClasses, err := destMigCluster.GetStorageClasses(destClient)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	plan.Status.DestStorageClasses = destStorageClasses
 
@@ -111,11 +110,11 @@ func (r *ReconcileMigPlan) updatePvs(ctx context.Context, plan *migapi.MigPlan) 
 	// Build PV map.
 	pvMap, err := r.getPvMap(srcClient, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	claims, err := r.getClaims(srcClient, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, claim := range claims {
 		key := k8sclient.ObjectKey{
@@ -128,7 +127,7 @@ func (r *ReconcileMigPlan) updatePvs(ctx context.Context, plan *migapi.MigPlan) 
 		}
 		selection, err := r.getDefaultSelection(pv, claim, plan, srcStorageClasses, destStorageClasses)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		plan.Spec.AddPv(
 			migapi.PV{
@@ -322,18 +321,18 @@ func (r *ReconcileMigPlan) getClaims(client compat.Client, plan *migapi.MigPlan)
 	list := &core.PersistentVolumeClaimList{}
 	err := client.List(context.TODO(), list, &k8sclient.ListOptions{})
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	podList, err := migpods.ListTemplatePods(client, plan.GetSourceNamespaces())
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	runningPods := &core.PodList{}
 	err = client.List(context.TODO(), runningPods, &k8sclient.ListOptions{})
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	inNamespaces := func(objNamespace string, namespaces []string) bool {
@@ -476,7 +475,7 @@ func (r *ReconcileMigPlan) getDestStorageClass(pv core.PersistentVolume,
 
 	isIntraCluster, err := plan.IsIntraCluster(r)
 	if err != nil {
-		return targetStorageClassName, liberr.Wrap(err)
+		return targetStorageClassName, err
 	}
 
 	// For gluster src volumes, migrate to cephfs or cephrbd (warn if unavailable)

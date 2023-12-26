@@ -18,8 +18,6 @@ package v1alpha1
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
-
 	kapi "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -124,7 +122,7 @@ func (r *DirectVolumeMigrationProgress) GetDVMforDVMP(client k8sclient.Client) (
 		ownerRef := types.NamespacedName{Name: ownerRef.Name, Namespace: r.Namespace}
 		err := client.Get(context.TODO(), ownerRef, owner)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		return owner, nil
 	}
@@ -135,14 +133,14 @@ func (r *DirectVolumeMigrationProgress) GetDVMforDVMP(client k8sclient.Client) (
 func (r *DirectVolumeMigrationProgress) GetMigrationforDVMP(client k8sclient.Client) (*MigMigration, error) {
 	dvm, err := r.GetDVMforDVMP(client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if dvm == nil {
 		return nil, nil
 	}
 	migration, err := dvm.GetMigrationForDVM(client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return migration, nil
 }

@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"path"
 	"strings"
 
@@ -103,7 +102,7 @@ func (r *DirectImageMigration) GetMigrationForDIM(client k8sclient.Client) (*Mig
 		ownerRef := types.NamespacedName{Name: ownerRef.Name, Namespace: r.Namespace}
 		err := client.Get(context.TODO(), ownerRef, owner)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		return owner, nil
 	}

@@ -3,8 +3,6 @@ package mighook
 import (
 	"context"
 	"encoding/base64"
-	liberr "github.com/konveyor/controller/pkg/error"
-
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/opentracing/opentracing-go"
 )
@@ -49,19 +47,19 @@ func (r ReconcileMigHook) validate(ctx context.Context, hook *migapi.MigHook) er
 
 	err := r.validateImage(ctx, hook)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateTargetCluster(ctx, hook)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validatePlaybookData(ctx, hook)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateCustom(ctx, hook)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }

@@ -9,7 +9,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migevent "github.com/konveyor/mig-controller/pkg/event"
 	batchv1 "k8s.io/api/batch/v1"
@@ -46,14 +45,14 @@ func (t *Task) runHooks(hookPhase string) (bool, error) {
 			},
 			&migHook)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		t.Log.Info("Getting k8s client for MigHook",
 			"migHook", path.Join(migHook.Namespace, migHook.Name))
 		client, err = t.getHookClient(migHook)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		svc := corev1.ServiceAccount{}
@@ -66,14 +65,14 @@ func (t *Task) runHooks(hookPhase string) (bool, error) {
 			"migHook", path.Join(migHook.Namespace, migHook.Name))
 		err = client.Get(context.TODO(), ref, &svc)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		t.Log.Info("Building Job resource definition for MigHook",
 			"migHook", path.Join(migHook.Namespace, migHook.Name))
 		job, err := t.prepareJob(hook, migHook, client)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		t.Log.Info("Creating Job for MigHook",
@@ -81,7 +80,7 @@ func (t *Task) runHooks(hookPhase string) (bool, error) {
 			"migHook", migHook.Namespace, migHook.Name)
 		result, err := t.ensureJob(job, hook, migHook, client)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		return result, nil
@@ -113,14 +112,14 @@ func (t *Task) stopHookJobs() (bool, error) {
 			},
 			&migHook)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		t.Log.Info("Getting k8s client for MigHook",
 			"migHook", path.Join(migHook.Namespace, migHook.Name))
 		client, err = t.getHookClient(migHook)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 
 		// Get the job for the hook and kill it.
@@ -233,11 +232,11 @@ func (t *Task) getHookClient(migHook migapi.MigHook) (k8sclient.Client, error) {
 	case "source":
 		client, err = t.getSourceClient()
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 	default:
 		err := fmt.Errorf("targetCluster must be 'source' or 'destination'. %s unknown", migHook.Spec.TargetCluster)
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return client, nil
 }

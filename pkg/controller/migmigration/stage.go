@@ -13,7 +13,6 @@ import (
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migevent "github.com/konveyor/mig-controller/pkg/event"
 	migpods "github.com/konveyor/mig-controller/pkg/pods"
@@ -186,7 +185,7 @@ func (t *Task) listApplicationPodsWithStageLabel(client k8sclient.Client) ([]cor
 	options := k8sclient.MatchingLabels(t.stagePodLabels())
 	err := client.List(context.TODO(), podList, options)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return podList.Items, nil
 }
@@ -195,7 +194,7 @@ func (t *Task) updateApplicationPodWithStageLabel(client k8sclient.Client, stage
 	counter := 0
 	existingPods, err := t.listApplicationPodsWithStageLabel(client)
 	if err != nil {
-		return counter, liberr.Wrap(err)
+		return counter, err
 	}
 	updatedPodNames := []string{}
 
@@ -221,7 +220,7 @@ func (t *Task) updateApplicationPodWithStageLabel(client k8sclient.Client, stage
 			"pod", path.Join(stagePod.Namespace, stagePod.Name))
 		err := client.Update(context.TODO(), &stagePod)
 		if err != nil {
-			return 0, liberr.Wrap(err)
+			return 0, err
 		}
 		counter++
 	}
@@ -232,7 +231,7 @@ func (t *Task) createStagePods(client k8sclient.Client, stagePods StagePodList) 
 	counter := 0
 	existingPods, err := t.listStagePods(client)
 	if err != nil {
-		return counter, liberr.Wrap(err)
+		return counter, err
 	}
 
 	for _, stagePod := range stagePods {
@@ -246,7 +245,7 @@ func (t *Task) createStagePods(client k8sclient.Client, stagePods StagePodList) 
 			"pod", path.Join(stagePod.Namespace, stagePod.Name))
 		err := client.Create(context.TODO(), &stagePod.Pod)
 		if err != nil && !k8serr.IsAlreadyExists(err) {
-			return 0, liberr.Wrap(err)
+			return 0, err
 		}
 		counter++
 	}
@@ -259,15 +258,15 @@ func (t *Task) listStagePods(client k8sclient.Client) (StagePodList, error) {
 	options := k8sclient.MatchingLabels(t.stagePodLabels())
 	err := client.List(context.TODO(), &podList, options)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	resourceLimitMapping, err := buildResourceLimitMapping(t.sourceNamespaces(), client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	stagePodImage, err := t.getStagePodImage(client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return BuildStagePods(t.stagePodLabels(), t.getPVCs(), &podList.Items, stagePodImage, resourceLimitMapping), nil
 }
@@ -277,12 +276,12 @@ func (t *Task) getStagePodImage(client k8sclient.Client) (string, error) {
 	clusterConfigRef := types.NamespacedName{Name: migapi.ClusterConfigMapName, Namespace: migapi.VeleroNamespace}
 	err := client.Get(context.TODO(), clusterConfigRef, clusterConfig)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 	stagePodImage, ok := clusterConfig.Data[migapi.StagePodImageKey]
 	if !ok {
-		return "", liberr.Wrap(errors.Errorf("Key [%v] not found in ConfigMap [%v/%v]",
-			migapi.StagePodImageKey, clusterConfigRef.Namespace, clusterConfigRef.Name))
+		return "", errors.Errorf("Key [%v] not found in ConfigMap [%v/%v]",
+			migapi.StagePodImageKey, clusterConfigRef.Namespace, clusterConfigRef.Name)
 	}
 	t.Log.Info("Got Stage Pod image from ConfigMap",
 		"stagePodImage", stagePodImage,
@@ -294,7 +293,7 @@ func (t *Task) ensureStagePodsFromOrphanedPVCs() error {
 	stagePods := StagePodList{}
 	client, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	t.Log.Info("Getting list of existing Stage Pods")
@@ -325,12 +324,12 @@ func (t *Task) ensureStagePodsFromOrphanedPVCs() error {
 	t.Log.Info("Building resource limit mapping for Stage Pods from Orphaned PVCs")
 	resourceLimitMapping, err := buildResourceLimitMapping(t.sourceNamespaces(), client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	t.Log.Info("Getting Stage Pod image")
 	stagePodImage, err := t.getStagePodImage(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	for _, ns := range t.sourceNamespaces() {
@@ -365,7 +364,7 @@ func (t *Task) ensureStagePodsFromOrphanedPVCs() error {
 	t.Log.Info("Creating Stage Pods on source cluster from Orphaned PVCs")
 	created, err := t.createStagePods(client, stagePods)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if created > 0 {
@@ -387,7 +386,7 @@ func (t *Task) ensureStagePodsFromOrphanedPVCs() error {
 func (t *Task) ensureStagePodsFromTemplates() error {
 	client, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	t.Log.Info("Getting list of Stage Pods to create for DeploymentConfigs, Deployments, " +
@@ -395,20 +394,20 @@ func (t *Task) ensureStagePodsFromTemplates() error {
 	podTemplates, err := migpods.ListTemplatePods(client, t.sourceNamespaces())
 	klog.Infof("ensureStagePodsFromTemplates: number of templatePods is %v", len(podTemplates))
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	t.Log.Info("Building Stage Pod resource mappings for DeploymentConfigs, Deployments, " +
 		"Daemonsets, ReplicaSets, CronJobs, Jobs on source cluster")
 	resourceLimitMapping, err := buildResourceLimitMapping(t.sourceNamespaces(), client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	t.Log.Info("Getting Stage Pod image for source cluster")
 	stagePodImage, err := t.getStagePodImage(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	t.Log.Info("Building Stage Pod definitions for DeploymentConfigs, Deployments, " +
@@ -418,7 +417,7 @@ func (t *Task) ensureStagePodsFromTemplates() error {
 		"Daemonsets, ReplicaSets, CronJobs, Jobs on source cluster")
 	created, err := t.createStagePods(client, stagePods)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if created > 0 {
@@ -442,15 +441,15 @@ func buildResourceLimitMapping(namespaces []string, client k8sclient.Client) (ma
 		limitRangeList := corev1.LimitRangeList{}
 		err := client.List(context.TODO(), &limitRangeList, k8sclient.InNamespace(ns))
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		memVal, err := resource.ParseQuantity(defaultMemory)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		cpuVal, err := resource.ParseQuantity(defaultCPU)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		for _, limitRange := range limitRangeList.Items {
 			for _, limit := range limitRange.Spec.Limits {
@@ -492,7 +491,7 @@ func parseResourceLimitMapping(ns string, mapping map[string]map[string]resource
 func (t *Task) ensureStagePodsFromRunning() error {
 	client, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	updated := 0
 	pods := []corev1.Pod{}
@@ -501,7 +500,7 @@ func (t *Task) ensureStagePodsFromRunning() error {
 		podList := corev1.PodList{}
 		err := client.List(context.TODO(), &podList, k8sclient.InNamespace(ns))
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		pods = append(pods, GetApplicationPodsWithStageLabels(t.stagePodLabels(), t.getPVCs(), &podList.Items)...)
 		klog.Infof("ensureStagePodsFromRunning: Number of stage Pod is %v", len(pods))
@@ -511,7 +510,7 @@ func (t *Task) ensureStagePodsFromRunning() error {
 		updated, err = t.updateApplicationPodWithStageLabel(client, pods)
 		klog.Infof("ensureStagePodsFromRunning: Number of updated Pod is %v", updated)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -534,7 +533,7 @@ func (t *Task) ensureStagePodsFromRunning() error {
 func (t *Task) ensureSourceStagePodsStarted() (report PodStartReport, err error) {
 	client, err := t.getSourceClient()
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	t.Log.Info("Checking health of Stage Pods on source cluster.")
@@ -545,7 +544,7 @@ func (t *Task) ensureSourceStagePodsStarted() (report PodStartReport, err error)
 func (t *Task) ensureDestinationStagePodsStarted() (report PodStartReport, err error) {
 	client, err := t.getDestinationClient()
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	t.Log.Info("Checking health of Stage Pods on destination cluster.")
@@ -569,7 +568,7 @@ func (t *Task) stagePodReport(client k8sclient.Client) (report PodStartReport, e
 			if err != nil {
 				healthy = false
 				if !k8serr.IsNotFound(err) {
-					err = liberr.Wrap(err)
+					err = err
 					return
 				}
 				report.reasons = append(
@@ -738,7 +737,7 @@ func (t *Task) allStagePodsMatch() (report []string, err error) {
 	t.Log.Info("Checking that Stage Pods match on source and destination clusters.")
 	dstClient, err := t.getDestinationClient()
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 
@@ -747,12 +746,12 @@ func (t *Task) allStagePodsMatch() (report []string, err error) {
 	options := k8sclient.MatchingLabels(t.stagePodLabels())
 	err = dstClient.List(context.TODO(), &podDList, options)
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	podSList := corev1.PodList{}
@@ -785,7 +784,7 @@ func (t *Task) allStagePodsMatch() (report []string, err error) {
 
 	stageReport, err := t.ensureDestinationStagePodsStarted()
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	if !stageReport.started {
@@ -800,11 +799,11 @@ func (t *Task) allStagePodsMatch() (report []string, err error) {
 func (t *Task) ensureStagePodsDeleted() error {
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	destClient, err := t.getDestinationClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	t.Log.Info("Checking for leftover Stage Pods on source cluster")
@@ -833,14 +832,14 @@ func (t *Task) ensureStagePodsDeleted() error {
 					"pod", path.Join(pod.Namespace, pod.Name))
 				err = srcClient.Update(context.TODO(), &pod)
 				if err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			} else {
 				t.Log.Info("Deleting Stage Pod on source cluster",
 					"pod", path.Join(pod.Namespace, pod.Name))
 				err := srcClient.Delete(context.TODO(), &pod)
 				if err != nil && !k8serr.IsNotFound(err) {
-					return liberr.Wrap(err)
+					return err
 				}
 				log.Info("Stage Pod deletion requested on source cluster.",
 					"pod", path.Join(pod.Namespace, pod.Name))
@@ -866,7 +865,7 @@ func (t *Task) ensureStagePodsDeleted() error {
 				"pod", path.Join(pod.Namespace, pod.Name))
 			err := destClient.Delete(context.TODO(), &pod)
 			if err != nil && !k8serr.IsNotFound(err) {
-				return liberr.Wrap(err)
+				return err
 			}
 			log.Info("Stage Pod deletion requested on destination cluster.",
 				"pod", path.Join(pod.Namespace, pod.Name))
@@ -880,11 +879,11 @@ func (t *Task) ensureStagePodsDeleted() error {
 func (t *Task) ensureStagePodsTerminated() (bool, error) {
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	destClient, err := t.getDestinationClient()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	terminatedPhases := map[corev1.PodPhase]bool{
@@ -903,7 +902,7 @@ func (t *Task) ensureStagePodsTerminated() (bool, error) {
 			k8sclient.InNamespace(srcNamespace),
 		)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		for _, pod := range podList.Items {
 			// Check if Pod phase is one of 'terminatedPhases'
@@ -927,7 +926,7 @@ func (t *Task) ensureStagePodsTerminated() (bool, error) {
 			k8sclient.InNamespace(destNamespace),
 		)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		for _, pod := range podList.Items {
 			// Check if Pod phase is one of 'terminatedPhases'

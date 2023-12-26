@@ -25,7 +25,6 @@ import (
 	migtrace "github.com/konveyor/mig-controller/pkg/tracing"
 
 	mapset "github.com/deckarep/golang-set"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/settings"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,17 +36,17 @@ func (r *ReconcileMigMigration) migrate(ctx context.Context, migration *migapi.M
 	// Ready
 	plan, err := migration.GetPlan(r)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 	if !plan.Status.IsReady() {
 		log.Info("Plan not ready. Migration can't run unless Plan is ready.")
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 
 	// Resources
 	planResources, err := plan.GetRefResources(r)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 
 	// Started

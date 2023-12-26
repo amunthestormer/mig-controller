@@ -25,7 +25,7 @@ func (t *Task) getAnnotations(client k8sclient.Client) (map[string]string, error
 	annotations := t.Annotations
 	//isIndirectImageMigrationApplicable, err := t.isIndirectImageMigrationApplicable()
 	//if err != nil {
-	//	return nil, liberr.Wrap(err)
+	//	return nil, err
 	//}
 	//if isIndirectImageMigrationApplicable {
 	//	registryService, err := t.PlanResources.MigPlan.GetRegistryService(client)
@@ -100,7 +100,7 @@ func (t *Task) ensureMigRegistries() (int, error) {
 		}
 		client, err := cluster.GetClient(t.Client)
 		if err != nil {
-			return nEnsured, liberr.Wrap(err)
+			return nEnsured, err
 		}
 
 		// Migration Registry Secret
@@ -108,7 +108,7 @@ func (t *Task) ensureMigRegistries() (int, error) {
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		secret, err := t.ensureRegistrySecret(client)
 		if err != nil {
-			return nEnsured, liberr.Wrap(err)
+			return nEnsured, err
 		}
 
 		// Get cluster specific registry image
@@ -116,21 +116,21 @@ func (t *Task) ensureMigRegistries() (int, error) {
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		registryImage, err := cluster.GetRegistryImage(client)
 		if err != nil {
-			return nEnsured, liberr.Wrap(err)
+			return nEnsured, err
 		}
 
 		t.Log.Info("Retrieving registry liveness timeout value from MigCluster configmaps",
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		registryLivenessTimeout, err := cluster.GetRegistryLivenessTimeout(client)
 		if err != nil {
-			return nEnsured, liberr.Wrap(err)
+			return nEnsured, err
 		}
 
 		t.Log.Info("Retrieving registry readiness timeout value from MigCluster configmaps",
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		registryReadinessTimeout, err := cluster.GetRegistryReadinessTimeout(client)
 		if err != nil {
-			return nEnsured, liberr.Wrap(err)
+			return nEnsured, err
 		}
 
 		// Migration Registry DeploymentConfig
@@ -138,7 +138,7 @@ func (t *Task) ensureMigRegistries() (int, error) {
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		err = t.ensureRegistryDeployment(client, secret, registryImage, registryLivenessTimeout, registryReadinessTimeout)
 		if err != nil {
-			return nEnsured, liberr.Wrap(err)
+			return nEnsured, err
 		}
 
 		// Migration Registry Service
@@ -146,7 +146,7 @@ func (t *Task) ensureMigRegistries() (int, error) {
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		err = t.ensureRegistryService(client, secret)
 		if err != nil {
-			return nEnsured, liberr.Wrap(err)
+			return nEnsured, err
 		}
 
 		nEnsured++
@@ -197,11 +197,11 @@ func (t *Task) ensureRegistrySecret(client k8sclient.Client) (*kapi.Secret, erro
 	}
 	err = plan.UpdateRegistrySecret(t.Client, storage, foundSecret)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	err = client.Update(context.TODO(), foundSecret)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	return foundSecret, nil
@@ -211,31 +211,31 @@ func (t *Task) deleteImageRegistryResourcesForClient(client k8sclient.Client, pl
 	t.Owner.Status.Conditions.DeleteCondition(RegistriesHealthy)
 	secret, err := plan.GetRegistrySecret(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if secret != nil {
 		t.Log.Info("Deleting registry secret created for migration.",
 			"secret", path.Join(secret.Namespace, secret.Name))
 		err := client.Delete(context.Background(), secret)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
 	err = t.deleteImageRegistryDeploymentForClient(client, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	foundService, err := plan.GetRegistryService(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if foundService != nil {
 		t.Log.Info("Deleting registry service created for migration.",
 			"secret", path.Join(secret.Namespace, secret.Name))
 		err := client.Delete(context.Background(), foundService)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -245,14 +245,14 @@ func (t *Task) deleteImageRegistryDeploymentForClient(client k8sclient.Client, p
 	t.Owner.Status.Conditions.DeleteCondition(RegistriesHealthy)
 	foundDeployment, err := plan.GetRegistryDeployment(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if foundDeployment != nil {
 		t.Log.Info("Deleting registry deployment created for migration.",
 			"deployment", path.Join(foundDeployment.Namespace, foundDeployment.Name))
 		err := client.Delete(context.Background(), foundDeployment, k8sclient.PropagationPolicy(metav1.DeletePropagationForeground))
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -275,19 +275,19 @@ func (t *Task) ensureRegistryDeployment(client k8sclient.Client, secret *kapi.Se
 	// Get Proxy Env Vars for DC
 	proxySecret, err := plan.GetProxySecret(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Construct Registry DC
 	newDeployment := plan.BuildRegistryDeployment(storage, proxySecret, name, dirName, registryImage, t.Owner.GetCorrelationLabels(), livenessTimeout, readinessTimeout)
 	foundDeployment, err := plan.GetRegistryDeployment(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if foundDeployment == nil {
 		err = client.Create(context.TODO(), newDeployment)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		return nil
 	}
@@ -297,7 +297,7 @@ func (t *Task) ensureRegistryDeployment(client k8sclient.Client, secret *kapi.Se
 	plan.UpdateRegistryDeployment(storage, foundDeployment, proxySecret, name, dirName, registryImage, t.Owner.GetCorrelationLabels(), livenessTimeout, readinessTimeout)
 	err = client.Update(context.TODO(), foundDeployment)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil
@@ -313,12 +313,12 @@ func (t *Task) ensureRegistryService(client k8sclient.Client, secret *kapi.Secre
 	newService := plan.BuildRegistryService(name)
 	foundService, err := plan.GetRegistryService(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if foundService == nil {
 		err = client.Create(context.TODO(), newService)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		return nil
 	}
@@ -330,11 +330,11 @@ func (t *Task) ensureRegistryService(client k8sclient.Client, secret *kapi.Secre
 	// client we are using does not support Patch yet.
 	err = client.Delete(context.Background(), foundService)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = client.Create(context.Background(), newService)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil
@@ -354,11 +354,11 @@ func (t *Task) deleteImageRegistryResources() error {
 			"migCluster", path.Join(cluster.Namespace, cluster.Name))
 		clusterClient, err := cluster.GetClient(t.Client)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		err = t.deleteImageRegistryResourcesForClient(clusterClient, plan)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil

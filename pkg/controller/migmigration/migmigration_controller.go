@@ -22,7 +22,6 @@ import (
 	"k8s.io/klog/v2/klogr"
 	"time"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
@@ -303,11 +302,11 @@ func (r *ReconcileMigMigration) Reconcile(ctx context.Context, request reconcile
 func (r *ReconcileMigMigration) postpone(migration *migapi.MigMigration) (time.Duration, error) {
 	plan, err := migration.GetPlan(r)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 	migrations, err := plan.ListMigrations(r)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 	// Pending migrations.
 	pending := []types.UID{}
@@ -345,7 +344,7 @@ func (r *ReconcileMigMigration) postpone(migration *migapi.MigMigration) (time.D
 func (r *ReconcileMigMigration) deleted() error {
 	migrations, err := migapi.ListMigrations(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, m := range migrations {
 		if m.Status.Phase == Completed || !m.Status.HasCondition(HasFinalMigration) {
@@ -354,7 +353,7 @@ func (r *ReconcileMigMigration) deleted() error {
 		m.Status.DeleteCondition(HasFinalMigration)
 		err := r.Update(context.TODO(), &m)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -365,7 +364,7 @@ func (r *ReconcileMigMigration) deleted() error {
 func (r *ReconcileMigMigration) setOwnerReference(migration *migapi.MigMigration) error {
 	plan, err := migapi.GetPlan(r, migration.Spec.MigPlanRef)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if plan == nil {
 		return nil
@@ -412,7 +411,7 @@ func (r *ReconcileMigMigration) ensureLabels(migration *migapi.MigMigration) err
 	migration.Labels[migapi.MigPlanDebugLabel] = migration.Spec.MigPlanRef.Name
 	err := r.Update(context.TODO(), migration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }

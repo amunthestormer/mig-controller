@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	ocappsv1 "github.com/openshift/api/apps/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -68,7 +67,7 @@ func (p pvcNameMapping) ExistsAsValue(destName string) bool {
 func (t *Task) swapPVCReferences() (reasons []string, err error) {
 	client, err := t.getDestinationClient()
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	// build a mapping of source to destination pvc names to avoid nested loops

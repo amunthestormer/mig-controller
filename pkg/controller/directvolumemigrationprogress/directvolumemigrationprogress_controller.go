@@ -34,7 +34,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	rsync_transfer "github.com/konveyor/crane-lib/state_transfer/transfer/rsync"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
@@ -169,7 +168,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) Reconcile(ctx context.Context, 
 		}
 		err = task.Run()
 		if err != nil {
-			return reconcile.Result{Requeue: true}, liberr.Wrap(err)
+			return reconcile.Result{Requeue: true}, err
 		}
 	}
 
@@ -201,7 +200,7 @@ func (r *RsyncPodProgressTask) Run() error {
 	if podRef != nil && podSelector == nil {
 		pod, err := getPod(r.SrcClient, podRef)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		rsyncPodStatus := r.getRsyncClientContainerStatus(pod, r)
 
@@ -211,7 +210,7 @@ func (r *RsyncPodProgressTask) Run() error {
 	} else if podSelector != nil && podNamespace != "" {
 		podList, err := r.getAllMatchingRsyncPods()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		var mostRecentPodStatus *migapi.RsyncPodStatus
 		for i := range podList.Items {

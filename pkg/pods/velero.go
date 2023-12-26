@@ -2,8 +2,6 @@ package pods
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
-
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -33,7 +31,7 @@ func FindVeleroPods(client k8sclient.Client) ([]corev1.Pod, error) {
 			FieldSelector: fieldSelector,
 		})
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	for _, pod := range list.Items {
 		if pod.DeletionTimestamp == nil {

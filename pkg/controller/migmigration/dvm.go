@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	dvmc "github.com/konveyor/mig-controller/pkg/controller/directvolumemigration"
 	kapi "k8s.io/api/core/v1"
@@ -234,7 +233,7 @@ func (t *Task) deleteDirectVolumeMigrationResources() error {
 	// fetch the DVM
 	dvm, err := t.getDirectVolumeMigration()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if dvm != nil {
@@ -244,7 +243,7 @@ func (t *Task) deleteDirectVolumeMigrationResources() error {
 			"directVolumeMigration", path.Join(dvm.Namespace, dvm.Name))
 		err = t.Client.Delete(context.TODO(), dvm)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 

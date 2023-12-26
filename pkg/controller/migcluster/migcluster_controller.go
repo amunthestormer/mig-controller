@@ -18,7 +18,6 @@ package migcluster
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"k8s.io/klog"
 	"k8s.io/klog/v2/klogr"
 	"time"
@@ -226,12 +225,12 @@ func (r *ReconcileMigCluster) setupRemoteWatch(cluster *migapi.MigCluster) error
 	if cluster.Spec.IsHostCluster {
 		restCfg, err = config.GetConfig()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	} else {
 		restCfg, err = cluster.BuildRestConfig(r.Client)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 

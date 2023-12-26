@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"strings"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -309,7 +308,7 @@ func (p *PersistentVolumeAdjuster) getRefToAnalyticNs(namespace string) *migapi.
 func (p *PersistentVolumeAdjuster) Run(pvNodeMap map[string][]MigAnalyticPersistentVolumeDetails) error {
 	pvDfOutputs, pvDuOutputs, err := p.DFExecutor.Execute(pvNodeMap)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	erroredPVs := []*DFOutput{}
 	erroredDuPVs := []string{}

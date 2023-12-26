@@ -4,7 +4,6 @@ import (
 	"context"
 	"math"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/crane-lib/state_transfer/transfer"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -90,7 +89,7 @@ func (t *Task) buildDestinationLimitRangeMap(nsMap map[string][]transfer.PVCPair
 		if _, exists := t.DestinationLimitRangeMapping[destNs]; !exists {
 			limitRange, err := t.getLimitRangeForNamespace(destNs, destClient)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			if limitRange != nil {
 				if t.DestinationLimitRangeMapping == nil {
@@ -112,7 +111,7 @@ func (t *Task) buildSourceLimitRangeMap(nsMap map[string][]transfer.PVCPair, src
 		if _, exists := t.SourceLimitRangeMapping[srcNs]; !exists {
 			limitRange, err := t.getLimitRangeForNamespace(srcNs, srcClient)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			if limitRange != nil {
 				if t.SourceLimitRangeMapping == nil {
@@ -133,7 +132,7 @@ func (t *Task) getLimitRangeForNamespace(ns string, client k8sclient.Client) (*c
 	limitRangeList := corev1.LimitRangeList{}
 	err := client.List(context.TODO(), &limitRangeList, k8sclient.InNamespace(ns))
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if len(limitRangeList.Items) == 0 {
 		return nil, nil
@@ -350,7 +349,7 @@ func (t *Task) getRsyncClientResourceRequirements(ns string, client k8sclient.Cl
 	requirements, err := t.getUserConfiguredResourceRequirements(
 		CLIENT_POD_CPU_LIMIT, CLIENT_POD_MEMORY_LIMIT, CLIENT_POD_CPU_REQUESTS, CLIENT_POD_MEMORY_REQUESTS)
 	if err != nil {
-		return requirements, liberr.Wrap(err)
+		return requirements, err
 	}
 	if limitRange, exists := t.SourceLimitRangeMapping[ns]; exists {
 		applyLimitRangeOnRequirements(&requirements, limitRange)
@@ -365,7 +364,7 @@ func (t *Task) getRsyncServerResourceRequirements(ns string, client k8sclient.Cl
 	requirements, err := t.getUserConfiguredResourceRequirements(
 		TRANSFER_POD_CPU_LIMIT, TRANSFER_POD_MEMORY_LIMIT, TRANSFER_POD_CPU_REQUESTS, TRANSFER_POD_MEMORY_REQUESTS)
 	if err != nil {
-		return requirements, liberr.Wrap(err)
+		return requirements, err
 	}
 	if limitRange, exists := t.DestinationLimitRangeMapping[ns]; exists {
 		applyLimitRangeOnRequirements(&requirements, limitRange)

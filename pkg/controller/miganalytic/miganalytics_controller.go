@@ -46,7 +46,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	imagev1 "github.com/openshift/api/image/v1"
@@ -229,7 +228,7 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 
 	err := r.getAnalyticPlan(analytic, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if plan == nil {
 		return fmt.Errorf("migplan %v/%v referenced from miganalytic %v/%v not found",
@@ -242,7 +241,7 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 
 	srcCluster, err := plan.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if srcCluster == nil {
 		return fmt.Errorf("source migcluster %v/%v referenced by migplan %v/%v could not be found",
@@ -252,7 +251,7 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 
 	client, err := srcCluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if client == nil {
 		return fmt.Errorf("source migcluster %v/%v client could not be built",
@@ -261,12 +260,12 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 
 	resources, err := collectResources(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	dynamic, err := dynamic.NewForConfig(client.RestConfig())
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	nodeToPVMap := make(map[string][]MigAnalyticPersistentVolumeDetails)
@@ -289,13 +288,13 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 		if analytic.Spec.AnalyzeK8SResources {
 			err := r.analyzeK8SResources(dynamic, resources, &ns, excludedResources, incompatible)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 		if analytic.Spec.AnalyzeImageCount && !isExcluded("imagestreams", excludedResources) && !Settings.DisImgCopy {
 			err := r.analyzeImages(client, &ns, analytic.Spec.ListImages, analytic.Spec.ListImagesLimit)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 
@@ -304,7 +303,7 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 
 			err := r.analyzePVCapacity(client, &ns)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 
@@ -324,7 +323,7 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 				nodeToPVMap[node] = append(nodeToPVMap[node], pvcs...)
 			}
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 
@@ -340,19 +339,19 @@ func (r *ReconcileMigAnalytic) analyze(analytic *migapi.MigAnalytic) error {
 
 		err = r.Update(context.TODO(), analytic)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
 	if analytic.Spec.AnalyzeExtendedPVCapacity {
 		err := r.analyzeExtendedPVCapacity(client, analytic, nodeToPVMap)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		analytic.Status.DeleteCondition(migapi.ExtendedPVAnalysisStarted)
 		err = r.Update(context.TODO(), analytic)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -371,7 +370,7 @@ func (r *ReconcileMigAnalytic) analyzeExtendedPVCapacity(sourceClient compat.Cli
 	}
 	err := volumeAdjuster.Run(nodeToPVMap)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -385,7 +384,7 @@ func (r *ReconcileMigAnalytic) getNodeToPVCMapForNS(ns *migapi.MigAnalyticNamesp
 		&podList,
 		k8sclient.InNamespace(ns.Namespace))
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == corev1.PodRunning {
@@ -400,7 +399,7 @@ func (r *ReconcileMigAnalytic) getNodeToPVCMapForNS(ns *migapi.MigAnalyticNamesp
 						}, &pvcObject)
 
 					if err != nil {
-						return nodeToPVDetails, liberr.Wrap(err)
+						return nodeToPVDetails, err
 					}
 
 					if _, exists := nodeToPVDetails[pod.Spec.NodeName]; !exists {
@@ -462,7 +461,7 @@ func (r *ReconcileMigAnalytic) analyzeK8SResources(dynamic dynamic.Interface,
 
 			list, err := dynamic.Resource(gvr).Namespace(ns.Namespace).List(context.Background(), metav1.ListOptions{})
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 
 			// If no resources of this type we won't add it to any lists
@@ -508,12 +507,12 @@ func (r *ReconcileMigAnalytic) analyzeImages(client compat.Client,
 	major, minor := client.MajorVersion(), client.MinorVersion()
 	internalRegistry, err := GetRegistryInfo(major, minor, client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	err = client.List(context.TODO(), &imageStreamList, k8sclient.InNamespace(namespace.Namespace))
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	for _, im := range imageStreamList.Items {
@@ -523,7 +522,7 @@ func (r *ReconcileMigAnalytic) analyzeImages(client compat.Client,
 				if len(internalRegistry) > 0 && strings.HasPrefix(dockerImageReference, internalRegistry) {
 					image, size, err := getImageDetails(tag.Items[i].Image, client)
 					if err != nil {
-						return liberr.Wrap(err)
+						return err
 					}
 
 					namespace.ImageCount += 1
@@ -548,7 +547,7 @@ func (r *ReconcileMigAnalytic) analyzePVCapacity(client compat.Client,
 	pvcList := corev1.PersistentVolumeClaimList{}
 	err := client.List(context.TODO(), &pvcList, k8sclient.InNamespace(namespace.Namespace))
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	for _, pvc := range pvcList.Items {
@@ -568,7 +567,7 @@ func (r *ReconcileMigAnalytic) getAnalyticPlan(analytic *migapi.MigAnalytic,
 		},
 		plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -738,13 +737,13 @@ func getImageDetails(tagItemImageName string,
 		},
 		image)
 	if err != nil {
-		return image, size, liberr.Wrap(err)
+		return image, size, err
 	}
 
 	dockerImageMetadata := docker10.DockerImage{}
 	err = json.Unmarshal(image.DockerImageMetadata.Raw, &dockerImageMetadata)
 	if err != nil {
-		return image, size, liberr.Wrap(err)
+		return image, size, err
 	}
 	size = resource.MustParse((strconv.Itoa(int(dockerImageMetadata.Size)/MiB) + MiBSuffix))
 

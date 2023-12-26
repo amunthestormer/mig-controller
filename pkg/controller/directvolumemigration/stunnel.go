@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/mig-controller/pkg/settings"
 
 	//"encoding/asn1"
@@ -38,18 +37,18 @@ type stunnelProxyConfig struct {
 func (t *Task) ensureStunnelTransport() error {
 	destClient, err := t.getDestinationClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Get client for source
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	transportOptions, err := t.getStunnelOptions()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	for ns := range t.getPVCNamespaceMap() {
@@ -68,7 +67,7 @@ func (t *Task) ensureStunnelTransport() error {
 		stunnelTransport, err := stunneltransport.GetTransportFromKubeObjects(
 			srcClient, destClient, nnPair, endpoint, transportOptions)
 		if err != nil && !k8serror.IsNotFound(err) {
-			return liberr.Wrap(err)
+			return err
 		}
 
 		if stunnelTransport == nil {
@@ -80,12 +79,12 @@ func (t *Task) ensureStunnelTransport() error {
 
 			err = stunnelTransport.CreateServer(destClient, endpoint)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 
 			err = stunnelTransport.CreateClient(srcClient, endpoint)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 	}
@@ -96,7 +95,7 @@ func (t *Task) ensureStunnelTransport() error {
 func (t *Task) getStunnelOptions() (*cranetransport.Options, error) {
 	proxyConfig, err := t.generateStunnelProxyConfig()
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	transportOptions := &cranetransport.Options{
 		ProxyURL:      proxyConfig.ProxyHost,
@@ -106,24 +105,24 @@ func (t *Task) getStunnelOptions() (*cranetransport.Options, error) {
 	// retrieve transfer image from source cluster
 	srcCluster, err := t.Owner.GetSourceCluster(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if srcCluster != nil {
 		srcTransferImage, err := srcCluster.GetRsyncTransferImage(t.Client)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		transportOptions.StunnelClientImage = srcTransferImage
 	}
 	// retrieve transfer image from destination cluster
 	destCluster, err := t.Owner.GetDestinationCluster(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if destCluster != nil {
 		destTransferImage, err := destCluster.GetRsyncTransferImage(t.Client)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		transportOptions.StunnelServerImage = destTransferImage
 	}
@@ -140,7 +139,7 @@ func (t *Task) generateStunnelProxyConfig() (stunnelProxyConfig, error) {
 		url, err := url.Parse(tcpProxyString)
 		if err != nil {
 			t.Log.Error(err, fmt.Sprintf("failed to parse %s setting", settings.TCPProxyKey))
-			return proxyConfig, liberr.Wrap(err)
+			return proxyConfig, err
 		}
 		proxyConfig.ProxyHost = url.Host
 		if url.User != nil {

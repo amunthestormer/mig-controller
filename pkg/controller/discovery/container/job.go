@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
@@ -103,7 +104,7 @@ func (r *Job) GetStored() ([]model.Model, error) {
 //
 
 func (r *Job) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*batchv1.Job)
 	if !cast {
 		return false
@@ -120,7 +121,7 @@ func (r *Job) Create(e event.CreateEvent) bool {
 }
 
 func (r *Job) Update(e event.UpdateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.ObjectNew.(*batchv1.Job)
 	if !cast {
 		return false
@@ -137,7 +138,7 @@ func (r *Job) Update(e event.UpdateEvent) bool {
 }
 
 func (r *Job) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*batchv1.Job)
 	if !cast {
 		return false

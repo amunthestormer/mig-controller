@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/opentracing/opentracing-go"
@@ -206,11 +205,11 @@ func (t *Task) Run(ctx context.Context) error {
 	switch t.Phase {
 	case Created, Started:
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case Prepare:
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CleanStaleRsyncResources:
 		// TODO Need to add some labels during DVM run to differentiate
@@ -218,72 +217,72 @@ func (t *Task) Run(ctx context.Context) error {
 		// one label for both is the wrong approach.
 		err := t.deleteRsyncResources()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateDestinationNamespaces:
 		// Create all of the namespaces the migrated PVCs are in are created on the
 		// destination
 		err := t.ensureDestinationNamespaces()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case DestinationNamespacesCreated:
 		// Ensure the namespaces are created
 		// TODO: bad func name
 		err := t.getDestinationNamespaces()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateDestinationPVCs:
 		// Create the PVCs on the destination
 		err := t.createDestinationPVCs()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case DestinationPVCsCreated:
 		// Get the PVCs on the destination and confirm they are bound
 		err := t.getDestinationPVCs()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateRsyncRoute:
 		err := t.ensureRsyncEndpoint()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case EnsureRsyncRouteAdmitted:
 		admitted, reasons, err := t.areRsyncRoutesAdmitted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if admitted {
 			t.Requeue = NoReQ
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Some Rsync Transfer Routes have not yet been admitted. Waiting.")
@@ -312,34 +311,34 @@ func (t *Task) Run(ctx context.Context) error {
 	case CreateRsyncConfig:
 		err := t.createRsyncConfig()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateStunnelConfig:
 		err := t.ensureStunnelTransport()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateRsyncTransferPods:
 		err := t.ensureRsyncTransferServer()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case WaitForRsyncTransferPodsRunning:
 		running, nonRunningPods, err := t.areRsyncTransferPodsRunning()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if running {
 			t.Requeue = NoReQ
@@ -350,7 +349,7 @@ func (t *Task) Run(ctx context.Context) error {
 				}
 			}
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Requeue = PollReQ
@@ -389,7 +388,7 @@ func (t *Task) Run(ctx context.Context) error {
 	case RunRsyncOperations:
 		allCompleted, anyFailed, failureReasons, err := t.runRsyncOperations()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = PollReQ
 		if allCompleted {
@@ -399,36 +398,36 @@ func (t *Task) Run(ctx context.Context) error {
 				return nil
 			}
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 	case CreatePVProgressCRs:
 		err := t.createPVProgressCR()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case DeleteRsyncResources:
 		err := t.deleteRsyncResources()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case WaitForStaleRsyncResourcesTerminated, WaitForRsyncResourcesTerminated:
 		err, deleted := t.waitForRsyncResourcesDeleted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if deleted {
 			t.Requeue = NoReQ
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 		t.Log.Info("Stale Rsync resources are still terminating. Waiting.")
@@ -437,7 +436,7 @@ func (t *Task) Run(ctx context.Context) error {
 	default:
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 

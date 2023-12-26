@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/controller/migcluster"
 	"github.com/konveyor/mig-controller/pkg/health"
@@ -145,86 +144,86 @@ func (r ReconcileMigPlan) validate(ctx context.Context, plan *migapi.MigPlan) er
 	// Source cluster
 	err := r.validateSourceCluster(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Destination cluster
 	err = r.validateDestinationCluster(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// validates possible migration options available for this plan
 	err = r.validatePossibleMigrationTypes(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Storage
 	err = r.validateStorage(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Migrated namespaces.
 	err = r.validateNamespaces(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Validates pod properties (e.g. limit of number of active pods, presence of node-selectors)
 	// within each namespace.
 	err = r.validatePodProperties(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Required namespaces.
 	err = r.validateRequiredNamespaces(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Conflict
 	err = r.validateConflict(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	//// Registry proxy secret
 	//err = r.validateRegistryProxySecrets(ctx, plan)
 	//if err != nil {
-	//	return liberr.Wrap(err)
+	//	return err
 	//}
 
 	// Validate health of Pods
 	err = r.validatePodHealth(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Hooks
 	err = r.validateHooks(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Included Resources
 	err = r.validateIncludedResources(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// GVK
 	err = r.compareGVK(ctx, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	//
 	//// Versions
 	//err = r.validateOperatorVersions(ctx, plan)
 	//if err != nil {
-	//	return liberr.Wrap(err)
+	//	return err
 	//}
 	return nil
 }
@@ -234,14 +233,14 @@ func (r ReconcileMigPlan) validate(ctx context.Context, plan *migapi.MigPlan) er
 func (r ReconcileMigPlan) validateIncludedResources(ctx context.Context, plan *migapi.MigPlan) error {
 	srcCluster, err := plan.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if srcCluster == nil || !srcCluster.Status.IsReady() {
 		return nil
 	}
 	srcClient, err := srcCluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	_, invalidResources, err := plan.GetIncludedResourcesList(srcClient)
 	if err != nil {
@@ -290,11 +289,11 @@ func (r ReconcileMigPlan) validatePossibleMigrationTypes(ctx context.Context, pl
 	}
 	isIntraCluster, err := plan.IsIntraCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	migrations, err := plan.ListMigrations(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	// find out whether any of the source namespaces are mapped to destination namespaces
 	mappedNamespaces := 0
@@ -402,7 +401,7 @@ func (r ReconcileMigPlan) getPotentialFilePermissionConflictNamespaces(plan *mig
 	srcCluster, err := plan.GetSourceCluster(r)
 	if err != nil {
 		klog.Infof("GetSourceCluster: %v", err)
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if srcCluster == nil || !srcCluster.Status.IsReady() {
 		return nil, nil
@@ -410,12 +409,12 @@ func (r ReconcileMigPlan) getPotentialFilePermissionConflictNamespaces(plan *mig
 	srcClient, err := srcCluster.GetClient(r)
 	if err != nil {
 		klog.Infof("GetClient: %v", err)
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	destCluster, err := plan.GetDestinationCluster(r)
 	if err != nil {
 		klog.Infof("GetDestinationCluster: %v", err)
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if destCluster == nil {
 		return nil, nil
@@ -423,7 +422,7 @@ func (r ReconcileMigPlan) getPotentialFilePermissionConflictNamespaces(plan *mig
 	destClient, err := destCluster.GetClient(r)
 	if err != nil {
 		klog.Infof("GetClient: %v", err)
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	erroredNs := []string{}
 	potentiallyProblematicNs := []string{}
@@ -493,7 +492,7 @@ func (r ReconcileMigPlan) validateStorage(ctx context.Context, plan *migapi.MigP
 
 	storage, err := migapi.GetStorage(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// NotFound
@@ -566,7 +565,7 @@ func (r ReconcileMigPlan) validateNamespaces(ctx context.Context, plan *migapi.M
 	}
 	filePermissionIssues, err := r.getPotentialFilePermissionConflictNamespaces(plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if len(filePermissionIssues) > 0 {
 		plan.Status.SetCondition(
@@ -627,14 +626,14 @@ func (r ReconcileMigPlan) validatePodProperties(ctx context.Context, plan *migap
 	}
 	cluster, err := plan.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if cluster == nil || !cluster.Status.IsReady() {
 		return nil
 	}
 	client, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	//Test
@@ -662,7 +661,7 @@ func (r ReconcileMigPlan) validatePodProperties(ctx context.Context, plan *migap
 		err := client.List(context.TODO(), &list, &options)
 		if err != nil {
 			klog.Infof("validatePodProperties List Pod: %v", err)
-			return liberr.Wrap(err)
+			return err
 		}
 		count += len(list.Items)
 		if r.hasCustomNodeSelectors(list.Items) {
@@ -743,7 +742,7 @@ func (r ReconcileMigPlan) validateSourceCluster(ctx context.Context, plan *migap
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// NotFound
@@ -810,7 +809,7 @@ func (r ReconcileMigPlan) validateDestinationCluster(ctx context.Context, plan *
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// NotFound
@@ -871,12 +870,12 @@ func (r ReconcileMigPlan) validateOperatorVersions(ctx context.Context, plan *mi
 
 	srcCluster, err := migapi.GetCluster(r, srcRef)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	destCluster, err := migapi.GetCluster(r, destRef)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	srcHasMismatch := srcCluster.Status.HasAnyCondition(
 		migcluster.OperatorVersionMismatch,
@@ -907,12 +906,12 @@ func (r ReconcileMigPlan) validateRequiredNamespaces(ctx context.Context, plan *
 	err := r.validateSourceNamespaces(plan)
 	if err != nil {
 		klog.Infof("validateSourceNamespaces: %v", err)
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateDestinationNamespaces(plan)
 	if err != nil {
 		klog.Infof("validateDestinationNamespaces: %v", err)
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil
@@ -941,14 +940,14 @@ func (r ReconcileMigPlan) validateSourceNamespaces(plan *migapi.MigPlan) error {
 	namespaces = append(namespaces, migapi.VeleroNamespace)
 	cluster, err := plan.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if cluster == nil || !cluster.Status.IsReady() {
 		return nil
 	}
 	client, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	ns := kapi.Namespace{}
 	notFound := make([]string, 0)
@@ -962,7 +961,7 @@ func (r ReconcileMigPlan) validateSourceNamespaces(plan *migapi.MigPlan) error {
 			notFound = append(notFound, name)
 		} else {
 			klog.Infof("validateSourceNamespaces GET NAMESPACE: %v", err)
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	if len(notFound) > 0 {
@@ -1022,14 +1021,14 @@ func (r ReconcileMigPlan) validateDestinationNamespaces(plan *migapi.MigPlan) er
 	namespaces = []string{migapi.VeleroNamespace}
 	cluster, err := plan.GetDestinationCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if cluster == nil || !cluster.Status.IsReady() {
 		return nil
 	}
 	client, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	ns := kapi.Namespace{}
 	notFound := make([]string, 0)
@@ -1042,7 +1041,7 @@ func (r ReconcileMigPlan) validateDestinationNamespaces(plan *migapi.MigPlan) er
 		if k8serror.IsNotFound(err) {
 			notFound = append(notFound, name)
 		} else {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	if len(notFound) > 0 {
@@ -1081,7 +1080,7 @@ func (r ReconcileMigPlan) validateConflict(ctx context.Context, plan *migapi.Mig
 	}
 	plans, err := migapi.ListPlans(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	list := []string{}
 	for _, p := range plans {
@@ -1364,7 +1363,7 @@ func (r ReconcileMigPlan) validateSourceRegistryProxySecret(plan *migapi.MigPlan
 	// Source cluster proxy secret validation
 	srcCluster, err := plan.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if srcCluster == nil {
@@ -1373,7 +1372,7 @@ func (r ReconcileMigPlan) validateSourceRegistryProxySecret(plan *migapi.MigPlan
 
 	srcClient, err := srcCluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = srcClient.List(
 		context.TODO(),
@@ -1384,7 +1383,7 @@ func (r ReconcileMigPlan) validateSourceRegistryProxySecret(plan *migapi.MigPlan
 		},
 	)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if len(list.Items) == 0 {
 		// No proxy secret is valid configuration
@@ -1426,7 +1425,7 @@ func (r ReconcileMigPlan) validateDestinationRegistryProxySecret(plan *migapi.Mi
 	// Destination cluster proxy secret validation
 	destCluster, err := plan.GetDestinationCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if destCluster == nil {
@@ -1435,7 +1434,7 @@ func (r ReconcileMigPlan) validateDestinationRegistryProxySecret(plan *migapi.Mi
 
 	destClient, err := destCluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = destClient.List(
 		context.TODO(),
@@ -1446,7 +1445,7 @@ func (r ReconcileMigPlan) validateDestinationRegistryProxySecret(plan *migapi.Mi
 		},
 	)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if len(list.Items) == 0 {
 		// No proxy secret is valid configuration
@@ -1488,7 +1487,7 @@ func (r ReconcileMigPlan) validatePodHealth(ctx context.Context, plan *migapi.Mi
 
 	cluster, err := plan.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if cluster == nil || !cluster.Status.IsReady() {
@@ -1497,7 +1496,7 @@ func (r ReconcileMigPlan) validatePodHealth(ctx context.Context, plan *migapi.Mi
 
 	client, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	unhealthyResources := migapi.UnhealthyResources{}
@@ -1506,7 +1505,7 @@ func (r ReconcileMigPlan) validatePodHealth(ctx context.Context, plan *migapi.Mi
 			Namespace: ns,
 		})
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 
 		workload := migapi.Workload{
@@ -1516,7 +1515,7 @@ func (r ReconcileMigPlan) validatePodHealth(ctx context.Context, plan *migapi.Mi
 			pod := &kapi.Pod{}
 			err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstrucredPod.UnstructuredContent(), pod)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 
 			workload.Resources = append(workload.Resources, pod.Name)
@@ -1574,7 +1573,7 @@ func (r ReconcileMigPlan) validateHooks(ctx context.Context, plan *migapi.MigPla
 			})
 			return nil
 		} else if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 
 		// InvalidHookSA
@@ -1690,12 +1689,12 @@ func (r *NfsValidation) Run(client k8sclient.Client) error {
 	}
 	err := r.init(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if !r.Plan.Status.HasCondition(NfsAccessCannotBeValidated) {
 		err = r.validate()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -1707,20 +1706,20 @@ func (r *NfsValidation) init(client k8sclient.Client) error {
 	var err error
 	r.cluster, err = r.Plan.GetDestinationCluster(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if !r.cluster.Spec.IsHostCluster {
 		r.client, err = r.cluster.GetClient(client)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		r.restCfg, err = r.cluster.BuildRestConfig(client)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		err = r.findPod()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -1755,7 +1754,7 @@ func (r *NfsValidation) validate() error {
 				if cast {
 					passed = false
 				} else {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 		} else {
@@ -1795,7 +1794,7 @@ func (r *NfsValidation) validate() error {
 func (r *NfsValidation) findPod() error {
 	podList, err := pods.FindVeleroPods(r.client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, pod := range podList {
 		r.pod = &pod

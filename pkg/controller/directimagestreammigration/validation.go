@@ -22,7 +22,6 @@ import (
 	"path"
 	"reflect"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -55,19 +54,19 @@ func (r ReconcileDirectImageStreamMigration) validate(ctx context.Context,
 	}
 	err := r.validateSrcCluster(ctx, imageStreamMigration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateDestCluster(ctx, imageStreamMigration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateImageStream(ctx, imageStreamMigration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateDestNamespace(ctx, imageStreamMigration)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	// imagestream validation?
 	return nil
@@ -94,7 +93,7 @@ func (r ReconcileDirectImageStreamMigration) validateSrcCluster(ctx context.Cont
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Not found
@@ -167,7 +166,7 @@ func (r ReconcileDirectImageStreamMigration) validateDestCluster(ctx context.Con
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Not found
@@ -228,19 +227,19 @@ func (r ReconcileDirectImageStreamMigration) validateImageStream(ctx context.Con
 
 	cluster, err := imageStreamMigration.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if cluster == nil || !cluster.Status.IsReady() {
 		return nil
 	}
 	client, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	is, err := migapi.GetImageStream(client, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Not found
@@ -267,21 +266,21 @@ func (r ReconcileDirectImageStreamMigration) validateDestNamespace(ctx context.C
 	}
 	cluster, err := imageStreamMigration.GetDestinationCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if cluster == nil || !cluster.Status.IsReady() {
 		return nil
 	}
 	client, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	ns := kapi.Namespace{}
 	nsName := imageStreamMigration.GetDestinationNamespace()
 	err = client.Get(context.TODO(), types.NamespacedName{Name: nsName}, &ns)
 	if err != nil {
 		if !k8serror.IsNotFound(err) {
-			return liberr.Wrap(err)
+			return err
 		}
 		imageStreamMigration.Status.SetCondition(migapi.Condition{
 			Type:     NsNotFoundOnDestinationCluster,

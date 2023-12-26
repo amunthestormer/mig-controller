@@ -19,7 +19,6 @@ package migplan
 import (
 	"context"
 	"fmt"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/opentracing/opentracing-go"
 	"k8s.io/klog/v2/klogr"
 	"sort"
@@ -195,7 +194,7 @@ type ReconcileMigPlan struct {
 
 func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
-	log = log.WithName("plan").WithValues("migPlan", request.Name)
+	log.WithName("plan").WithValues("migPlan", request.Name)
 
 	// Fetch the MigPlan instance
 	plan := &migapi.MigPlan{}
@@ -383,7 +382,7 @@ func (r *ReconcileMigPlan) handleClosed(ctx context.Context, plan *migapi.MigPla
 func (r *ReconcileMigPlan) ensureClosed(plan *migapi.MigPlan) error {
 	clusters, err := migapi.ListClusters(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, cluster := range clusters {
 		if !cluster.Status.IsReady() {
@@ -391,7 +390,7 @@ func (r *ReconcileMigPlan) ensureClosed(plan *migapi.MigPlan) error {
 		}
 		err = cluster.DeleteResources(r, plan.GetCorrelationLabels())
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	plan.Status.DeleteCondition(StorageEnsured, RegistriesEnsured, Suspended)
@@ -405,7 +404,7 @@ func (r *ReconcileMigPlan) ensureClosed(plan *migapi.MigPlan) error {
 	plan.MarkReconciled()
 	err = r.Update(context.TODO(), plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil
@@ -424,7 +423,7 @@ func (r *ReconcileMigPlan) planSuspended(ctx context.Context, plan *migapi.MigPl
 
 	migrations, err := plan.ListMigrations(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Sort migrations by timestamp, newest first.
@@ -481,27 +480,27 @@ func (r ReconcileMigPlan) deleteImageRegistryResourcesForClient(client k8sclient
 	plan.Status.Conditions.DeleteCondition(RegistriesEnsured)
 	secret, err := plan.GetRegistrySecret(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if secret != nil {
 		err := client.Delete(context.Background(), secret)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
 	err = r.deleteImageRegistryDeploymentForClient(client, plan)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	foundService, err := plan.GetRegistryService(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if foundService != nil {
 		err := client.Delete(context.Background(), foundService)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -511,12 +510,12 @@ func (r ReconcileMigPlan) deleteImageRegistryDeploymentForClient(client k8sclien
 	plan.Status.Conditions.DeleteCondition(RegistriesEnsured)
 	foundDeployment, err := plan.GetRegistryDeployment(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if foundDeployment != nil {
 		err := client.Delete(context.Background(), foundDeployment, k8sclient.PropagationPolicy(metav1.DeletePropagationForeground))
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -531,7 +530,7 @@ func (r *ReconcileMigPlan) ensureMigAnalytics(ctx context.Context, plan *migapi.
 	err := r.List(context.TODO(), migAnalytics, k8sclient.MatchingLabels(map[string]string{MigPlan: plan.Name}))
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	for _, migAnalytic := range migAnalytics.Items {
@@ -540,7 +539,7 @@ func (r *ReconcileMigPlan) ensureMigAnalytics(ctx context.Context, plan *migapi.
 				migAnalytic.Spec.Refresh = true
 				err := r.Update(context.TODO(), &migAnalytic)
 				if err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 			return nil
@@ -561,7 +560,7 @@ func (r *ReconcileMigPlan) ensureMigAnalytics(ctx context.Context, plan *migapi.
 	pvMigAnalytics.Spec.MigPlanRef = &kapi.ObjectReference{Namespace: plan.Namespace, Name: plan.Name}
 	err = r.Create(context.TODO(), pvMigAnalytics)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -574,7 +573,7 @@ func (r *ReconcileMigPlan) checkIfMigAnalyticsReady(ctx context.Context, plan *m
 	migAnalytics := &migapi.MigAnalyticList{}
 	err := r.List(context.TODO(), migAnalytics, k8sclient.MatchingLabels(map[string]string{MigPlan: plan.Name}))
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	for i := range migAnalytics.Items {
 		migAnalytic := &migAnalytics.Items[i]

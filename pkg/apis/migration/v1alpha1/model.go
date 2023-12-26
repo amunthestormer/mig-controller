@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"k8s.io/klog"
 	"strconv"
 
@@ -162,7 +161,7 @@ func GetMigrationForDVM(client k8sclient.Client, owners []metav1.OwnerReference)
 		if errors.IsNotFound(err) {
 			return nil, nil
 		} else {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 	}
 

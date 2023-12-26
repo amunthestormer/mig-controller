@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
@@ -35,7 +34,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) validate(pvProgress *migapi.Dir
 	cluster, err = r.validateCluster(pvProgress)
 	if err != nil {
 		log.V(4).Info("Validation check for referenced MigCluster failed", "error", err)
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	if cluster == nil {
@@ -43,13 +42,13 @@ func (r *ReconcileDirectVolumeMigrationProgress) validate(pvProgress *migapi.Dir
 	}
 	client, err = cluster.GetClient(r)
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	err = r.validateSpec(client, pvProgress)
 	if err != nil {
 		log.V(4).Info("Validation check for spec failed", "error", err)
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 	return
@@ -73,7 +72,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) validateSpec(srcClient compat.C
 					path.Join(podRef.Namespace, podRef.Name)),
 			})
 		default:
-			err = liberr.Wrap(err)
+			err = err
 		}
 	} else if podSelector != nil && podNamespace != "" {
 		// return if the pod identity label is not present in the pod selector, cannot find Rsync pods
@@ -114,7 +113,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) validateCluster(pvProgress *mig
 
 	cluster, err = migapi.GetCluster(r, clusterRef)
 	if err != nil {
-		err = liberr.Wrap(err)
+		err = err
 		return
 	}
 

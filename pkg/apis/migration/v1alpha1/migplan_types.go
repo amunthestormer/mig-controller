@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"k8s.io/klog"
 	"net/url"
 	"reflect"
@@ -359,7 +358,7 @@ func (r *MigPlan) BuildRegistrySecret(client k8sclient.Client, storage *MigStora
 func (r *MigPlan) UpdateRegistrySecret(client k8sclient.Client, storage *MigStorage, registrySecret *kapi.Secret) error {
 	credSecret, err := storage.GetBackupStorageCredSecret(client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if credSecret == nil {
 		return errors.New("Credentials secret not found.")
@@ -367,7 +366,7 @@ func (r *MigPlan) UpdateRegistrySecret(client k8sclient.Client, storage *MigStor
 	provider := storage.GetBackupStorageProvider()
 	err = provider.UpdateRegistrySecret(credSecret, registrySecret)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }

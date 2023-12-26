@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/opentracing/opentracing-go"
@@ -149,11 +148,11 @@ func (t *Task) Run(ctx context.Context) error {
 	switch t.Phase {
 	case Created, Started:
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case Prepare:
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case MigrateImageStream:
 		// Migrate internal images in the imagestream
@@ -162,13 +161,13 @@ func (t *Task) Run(ctx context.Context) error {
 			t.fail(MigrationFailed, []string{err.Error()})
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case Completed:
 	default:
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -57,11 +56,11 @@ func (r ReconcileMigStorage) validate(ctx context.Context, storage *migapi.MigSt
 	}
 	err := r.validateBackupStorage(ctx, storage)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateVolumeSnapshotStorage(ctx, storage)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil
@@ -116,7 +115,7 @@ func (r ReconcileMigStorage) validateBackupStorage(ctx context.Context, storage 
 	// Secret
 	secret, err := storage.GetBackupStorageCredSecret(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// NotFound
@@ -181,7 +180,7 @@ func (r ReconcileMigStorage) validateVolumeSnapshotStorage(ctx context.Context, 
 	// Secret
 	secret, err := storage.GetVolumeSnapshotCredSecret(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if storage.Spec.VolumeSnapshotProvider != "" {

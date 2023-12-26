@@ -71,40 +71,40 @@ func (r ReconcileMigCluster) validate(ctx context.Context, cluster *migapi.MigCl
 	// General settings
 	err := r.validateURL(ctx, cluster)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	klog.Info("URL validated")
 	// SA secret
 	err = r.validateSaSecret(ctx, cluster)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	klog.Info("SaSecret validated")
 
 	// Test Connection
 	err = r.testConnection(ctx, cluster)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	klog.Info("testConnection validated")
 
 	// Token privileges
 	err = r.validateSaTokenPrivileges(ctx, cluster)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	klog.Info("Token Privileges validated")
 
 	//// Exposed registry route
 	//err = r.validateRegistryRoute(ctx, cluster)
 	//if err != nil {
-	//	return liberr.Wrap(err)
+	//	return err
 	//}
 
 	//// cluster version
 	//err = r.validateOperatorVersionMatchesHost(ctx, cluster)
 	//if err != nil {
-	//	return liberr.Wrap(err)
+	//	return err
 	//}
 
 	return nil
@@ -182,7 +182,7 @@ func (r ReconcileMigCluster) validateSaSecret(ctx context.Context, cluster *miga
 
 	secret, err := migapi.GetSecret(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// NotFound
@@ -280,7 +280,7 @@ func (r ReconcileMigCluster) validateRegistryRoute(ctx context.Context, cluster 
 	if cluster.Spec.ExposedRegistryPath != "" {
 		statusCode, regErr, err := checkRegistryConnection(cluster, r.Client)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if regErr != nil {
 			cluster.Status.SetCondition(migapi.Condition{
@@ -413,15 +413,15 @@ func (r *ReconcileMigCluster) validateSaTokenPrivileges(ctx context.Context, clu
 
 	client, err := cluster.GetClient(r.Client)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	//err = client.Create(context.TODO(), &migrationSar)
 	//if err != nil {
-	//	return liberr.Wrap(err)
+	//	return err
 	//}
 	err = client.Create(context.TODO(), &veleroSar)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	//if !migrationSar.Status.Allowed || !veleroSar.Status.Allowed {
@@ -453,7 +453,7 @@ func (r ReconcileMigCluster) validateOperatorVersionMatchesHost(ctx context.Cont
 
 	clusterClient, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	clusterOperatorVersion, err := cluster.GetOperatorVersion(clusterClient)
 	if clusterOperatorVersion == "" {
@@ -510,11 +510,11 @@ func (r ReconcileMigCluster) isCrossVersionCompatible(semverA string, semverB st
 	isCompatible = false
 	majorA, minorA, bugfixA, err := r.parseOperatorSemVer(semverA)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	majorB, minorB, bugfixB, err := r.parseOperatorSemVer(semverB)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	// Verify major version matches

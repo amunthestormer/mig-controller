@@ -18,7 +18,6 @@ package directimagemigration
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	imagev1 "github.com/openshift/api/image/v1"
 	kapi "k8s.io/api/core/v1"
@@ -35,7 +34,7 @@ func (t *Task) getDirectImageStreamMigrations() ([]migapi.DirectImageStreamMigra
 		&dismList,
 		k8sclient.MatchingLabels(t.Owner.GetCorrelationLabels()))
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	return dismList.Items, nil
 }
@@ -44,7 +43,7 @@ func (t *Task) listImageStreams() error {
 	// Get client for source
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	var isRefList []*migapi.ImageStreamListItem
 	// Get list namespaces to iterate over
@@ -55,7 +54,7 @@ func (t *Task) listImageStreams() error {
 			&isList,
 			k8sclient.InNamespace(srcNsName))
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		for _, is := range isList.Items {
 			objRef := &kapi.ObjectReference{
@@ -78,7 +77,7 @@ func (t *Task) createDirectImageStreamMigrations() error {
 	// Get client for source
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	// Get list namespaces to iterate over
 	for n, isRef := range t.Owner.Status.NewISs {
@@ -97,7 +96,7 @@ func (t *Task) createDirectImageStreamMigrations() error {
 		case errors.IsNotFound(err):
 			t.Owner.Status.NewISs[n].NotFound = true
 		case err != nil:
-			return liberr.Wrap(err)
+			return err
 		default:
 			t.Owner.Status.NewISs[n].NotFound = false
 		}
@@ -107,14 +106,14 @@ func (t *Task) createDirectImageStreamMigrations() error {
 			&dismList,
 			k8sclient.MatchingLabels(t.Owner.DirectImageStreamMigrationLabels(imageStream)))
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if t.Owner.Status.NewISs[n].NotFound {
 			for _, dism := range dismList.Items {
 				// Delete
 				err := t.Client.Delete(context.TODO(), &dism)
 				if err != nil && !errors.IsNotFound(err) {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 			continue
@@ -125,7 +124,7 @@ func (t *Task) createDirectImageStreamMigrations() error {
 		imageStreamMigration := t.buildDirectImageStreamMigration(imageStream, isRef.DestNamespace)
 		err = t.Client.Create(context.TODO(), &imageStreamMigration)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		objRef := &kapi.ObjectReference{
 			Namespace: imageStreamMigration.Namespace,

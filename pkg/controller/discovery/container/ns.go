@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/konveyor/mig-controller/pkg/controller/discovery/model"
 	"k8s.io/api/core/v1"
+	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -101,7 +102,7 @@ func (r *Namespace) GetStored() ([]model.Model, error) {
 //
 
 func (r *Namespace) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*v1.Namespace)
 	if !cast {
 		return false
@@ -122,7 +123,7 @@ func (r *Namespace) Update(e event.UpdateEvent) bool {
 }
 
 func (r *Namespace) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*v1.Namespace)
 	if !cast {
 		return false

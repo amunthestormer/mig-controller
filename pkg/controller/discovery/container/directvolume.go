@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"k8s.io/klog/v2/klogr"
 	"time"
 
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
@@ -98,7 +99,7 @@ func (r *DirectVolumeMigration) GetStored() ([]model.Model, error) {
 //
 
 func (r *DirectVolumeMigration) Create(e event.CreateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*migapi.DirectVolumeMigration)
 	if !cast {
 		return false
@@ -111,7 +112,7 @@ func (r *DirectVolumeMigration) Create(e event.CreateEvent) bool {
 }
 
 func (r *DirectVolumeMigration) Update(e event.UpdateEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.ObjectNew.(*migapi.DirectVolumeMigration)
 	if !cast {
 		return false
@@ -124,7 +125,7 @@ func (r *DirectVolumeMigration) Update(e event.UpdateEvent) bool {
 }
 
 func (r *DirectVolumeMigration) Delete(e event.DeleteEvent) bool {
-	Log = Log.WithName("discovery")
+	klogr.New().WithName("discovery")
 	object, cast := e.Object.(*migapi.DirectVolumeMigration)
 	if !cast {
 		return false

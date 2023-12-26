@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -18,17 +17,17 @@ func (r *ReconcileDirectVolumeMigration) migrate(ctx context.Context, direct *mi
 
 	planResources, err := r.getDVMPlanResources(direct)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 
 	sparseFilePVCMap, err := r.getSparseFilePVCMap(planResources.MigPlan)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 
 	endpointType, err := r.getEndpointType(direct)
 	if err != nil {
-		return 0, liberr.Wrap(err)
+		return 0, err
 	}
 
 	// Started
@@ -111,27 +110,27 @@ func (r *ReconcileDirectVolumeMigration) getDVMPlanResources(direct *migapi.Dire
 		// Ready
 		migration, err := direct.GetMigrationForDVM(r)
 		if err != nil {
-			return planResources, liberr.Wrap(err)
+			return planResources, err
 		}
 
 		if migration == nil {
 			log.Info("Migration not found for DVM", "name", direct.Name)
-			return planResources, liberr.Wrap(err)
+			return planResources, err
 		}
 
 		plan, err := migration.GetPlan(r)
 		if err != nil {
-			return planResources, liberr.Wrap(err)
+			return planResources, err
 		}
 		if !plan.Status.IsReady() {
 			log.Info("Plan not ready.", "name", migration.Name)
-			return planResources, liberr.Wrap(err)
+			return planResources, err
 		}
 
 		// Resources
 		planResources, err = plan.GetRefResources(r)
 		if err != nil {
-			return planResources, liberr.Wrap(err)
+			return planResources, err
 		}
 		return planResources, nil
 	}
@@ -151,7 +150,7 @@ func (r *ReconcileDirectVolumeMigration) getSparseFilePVCMap(plan *migapi.MigPla
 			map[string]string{
 				"migplan": plan.Name}))
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	for _, migAnalytic := range analytics.Items {
 		if migAnalytic.Spec.AnalyzeExtendedPVCapacity {
@@ -172,15 +171,15 @@ func (r *ReconcileDirectVolumeMigration) getSparseFilePVCMap(plan *migapi.MigPla
 func (r *ReconcileDirectVolumeMigration) getEndpointType(direct *migapi.DirectVolumeMigration) (migapi.EndpointType, error) {
 	destCluster, err := direct.GetDestinationCluster(r)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 	destClient, err := destCluster.GetClient(r)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 	clusterConfig, err := destCluster.GetClusterConfigMap(destClient)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 	endpointType, exists := clusterConfig.Data[migapi.RSYNC_ENDPOINT_TYPE]
 	if !exists {

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"path"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,7 +33,7 @@ func (t *Task) getDirectImageMigration() (*migapi.DirectImageMigration, error) {
 		&dimList,
 		k8sclient.MatchingLabels(t.Owner.GetCorrelationLabels()))
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if len(dimList.Items) > 0 {
 		return &dimList.Items[0], nil
@@ -45,7 +44,7 @@ func (t *Task) getDirectImageMigration() (*migapi.DirectImageMigration, error) {
 func (t *Task) createDirectImageMigration() error {
 	dim, err := t.getDirectImageMigration()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if dim != nil {
 		return nil
@@ -55,7 +54,7 @@ func (t *Task) createDirectImageMigration() error {
 		"directImageMigration", path.Join(dim.Namespace, dim.Name))
 	err = t.Client.Create(context.TODO(), dim)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -97,7 +96,7 @@ func (t *Task) deleteDirectImageMigrationResources() error {
 	// fetch the DIM
 	dim, err := t.getDirectImageMigration()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	if dim != nil {
@@ -107,7 +106,7 @@ func (t *Task) deleteDirectImageMigrationResources() error {
 			"directImageMigration", path.Join(dim.Namespace, dim.Name))
 		err = t.Client.Delete(context.TODO(), dim)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 

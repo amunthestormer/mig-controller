@@ -22,7 +22,6 @@ import (
 	migtrace "github.com/konveyor/mig-controller/pkg/tracing"
 	"github.com/opentracing/opentracing-go"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
@@ -45,7 +44,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) initTracer(dvmp migapi.DirectVo
 		if errors.IsNotFound(errorutil.Unwrap(err)) {
 			return nil, nil
 		}
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if dvm == nil {
 		return nil, nil
@@ -56,7 +55,7 @@ func (r *ReconcileDirectVolumeMigrationProgress) initTracer(dvmp migapi.DirectVo
 		if errors.IsNotFound(errorutil.Unwrap(err)) {
 			return nil, nil
 		}
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if migration == nil {
 		return nil, nil

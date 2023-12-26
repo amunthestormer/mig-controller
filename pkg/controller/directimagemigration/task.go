@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/opentracing/opentracing-go"
@@ -156,38 +155,38 @@ func (t *Task) Run(ctx context.Context) error {
 	switch t.Phase {
 	case Created, Started:
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case Prepare:
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateDestinationNamespaces:
 		// Create the target namespaces on the destination
 		err := t.ensureDestinationNamespaces()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case ListImageStreams:
 		// Add the list of ImageStreams to the dim CR
 		err := t.listImageStreams()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateDirectImageStreamMigrations:
 		// Create the DirectImageStreamMigration CRs
 		err := t.createDirectImageStreamMigrations()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case WaitingForDirectImageStreamMigrationsToComplete:
 		completed, reasons := t.checkDISMCompletion()
@@ -197,7 +196,7 @@ func (t *Task) Run(ctx context.Context) error {
 				t.fail(MigrationFailed, reasons)
 			} else {
 				if err = t.next(); err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 		} else {
@@ -209,7 +208,7 @@ func (t *Task) Run(ctx context.Context) error {
 	default:
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 

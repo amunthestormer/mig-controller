@@ -9,7 +9,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/go-logr/logr"
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/konveyor/mig-controller/pkg/errorutil"
@@ -373,23 +372,23 @@ func (t *Task) Run(ctx context.Context) error {
 	switch t.Phase {
 	case Created, Started, Rollback:
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case StartRefresh:
 		started, err := t.startRefresh()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if started {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 	case WaitForRefresh:
 		refreshed := t.waitForRefresh()
 		if refreshed {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Requeue = PollReQ
@@ -397,27 +396,27 @@ func (t *Task) Run(ctx context.Context) error {
 	case CleanStaleResticCRs:
 		err := t.deleteStaleResticCRs()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CleanStaleVeleroCRs:
 		err := t.deleteStaleVeleroCRs()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateRegistries:
 		nEnsured, err := t.ensureMigRegistries()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if nEnsured == 2 {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info(fmt.Sprintf("Created [%v/2] registries, retrying.", nEnsured))
@@ -430,13 +429,13 @@ func (t *Task) Run(ctx context.Context) error {
 			if err.Error() == "ImagePullBackOff" {
 				t.fail(WaitForRegistriesReady, []string{message})
 			} else {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 		if nEnsured == 2 && message == "" {
 			setMigRegistryHealthyCondition(t.Owner)
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info(fmt.Sprintf("Found [%v/2] registries in healthy state. Waiting.", nEnsured))
@@ -445,25 +444,25 @@ func (t *Task) Run(ctx context.Context) error {
 	case DeleteRegistries:
 		err := t.deleteImageRegistryResources()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateDirectImageMigration:
 		// Create the DirectImageMigration CR
 		err := t.createDirectImageMigration()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case WaitForDirectImageMigrationToComplete:
 		// Get the DirectImageMigration CR
 		dim, err := t.getDirectImageMigration()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if dim == nil {
 			return errors.New("DirectImageMigration not found")
@@ -485,7 +484,7 @@ func (t *Task) Run(ctx context.Context) error {
 				// Once supported, add reasons to Status.Warnings for the Step
 			}
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Requeue = PollReQ
@@ -497,7 +496,7 @@ func (t *Task) Run(ctx context.Context) error {
 			propagated, err := t.veleroCloudSecret(cluster)
 
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			if propagated {
 				count++
@@ -507,7 +506,7 @@ func (t *Task) Run(ctx context.Context) error {
 		}
 		if count == 2 {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info(fmt.Sprintf("Cloud secret has propagated to Velero Pod "+
@@ -518,11 +517,11 @@ func (t *Task) Run(ctx context.Context) error {
 		status, err := t.runHooks(migapi.PreBackupHookPhase)
 		if err != nil {
 			t.fail(PreBackupHooksFailed, []string{err.Error()})
-			return liberr.Wrap(err)
+			return err
 		}
 		if status {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info(fmt.Sprintf("PreBackupHooks are still running. Waiting."))
@@ -531,15 +530,15 @@ func (t *Task) Run(ctx context.Context) error {
 	case EnsureInitialBackup:
 		_, err := t.ensureInitialBackup()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case InitialBackupCreated:
 		backup, err := t.getInitialBackup()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if backup == nil {
 			return errors.New("Backup not found")
@@ -551,7 +550,7 @@ func (t *Task) Run(ctx context.Context) error {
 				t.fail(InitialBackupFailed, reasons)
 			} else {
 				if err = t.next(); err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 		} else {
@@ -572,11 +571,11 @@ func (t *Task) Run(ctx context.Context) error {
 	case AnnotateResources:
 		finished, err := t.annotateStageResources()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if finished {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Annotated/labeled source cluster resources this reconcile, "+
@@ -587,32 +586,32 @@ func (t *Task) Run(ctx context.Context) error {
 		err := t.ensureStagePodsFromRunning()
 		if err != nil {
 			t.Log.Error(err, "Error creating stage pods on source cluster from running pods")
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case EnsureStagePodsFromTemplates:
 		err := t.ensureStagePodsFromTemplates()
 		if err != nil {
 			t.Log.Error(err, "Error creating stage pods on source cluster from templates")
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case EnsureStagePodsFromOrphanedPVCs:
 		err := t.ensureStagePodsFromOrphanedPVCs()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case StagePodsCreated:
 		report, err := t.ensureSourceStagePodsStarted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if report.failed {
 			t.Log.Info("Migration failed due to a problem with source cluster stage pods")
@@ -621,7 +620,7 @@ func (t *Task) Run(ctx context.Context) error {
 		}
 		if report.started {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Waiting for Stage Pods to be ready on source cluster")
@@ -631,27 +630,27 @@ func (t *Task) Run(ctx context.Context) error {
 	case RestartRestic:
 		err := t.restartResticPods()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case RestartVelero:
 		err := t.restartVeleroPods()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case WaitForResticReady:
 		started, err := t.haveResticPodsStarted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if started {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Restic is unready on the source or target cluster. Waiting.")
@@ -660,11 +659,11 @@ func (t *Task) Run(ctx context.Context) error {
 	case WaitForVeleroReady:
 		started, err := t.haveVeleroPodsStarted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if started {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Velero Pod(s) are unready on the source or target cluster. Waiting.")
@@ -673,19 +672,19 @@ func (t *Task) Run(ctx context.Context) error {
 	case QuiesceApplications:
 		err := t.quiesceApplications()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case EnsureQuiesced:
 		quiesced, err := t.ensureQuiescedPodsTerminated()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if quiesced {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Quiescing on source cluster is incomplete. " +
@@ -695,48 +694,48 @@ func (t *Task) Run(ctx context.Context) error {
 	case UnQuiesceSrcApplications:
 		err := t.unQuiesceSrcApplications()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case SwapPVCReferences:
 		reasons, err := t.swapPVCReferences()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if len(reasons) > 0 {
 			t.fail(MigrationFailed, reasons)
 		} else {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 	case UnQuiesceDestApplications:
 		err := t.unQuiesceDestApplications()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case CreateDirectVolumeMigration:
 		err := t.createDirectVolumeMigration()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case WaitForDirectVolumeMigrationToComplete:
 		dvm, err := t.getDirectVolumeMigration()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		// if no dvm, continue to next task
 		if dvm == nil {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			break
 		}
@@ -751,13 +750,13 @@ func (t *Task) Run(ctx context.Context) error {
 				t.setDirectVolumeMigrationFailureWarning(dvm)
 			}
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Requeue = PollReQ
 			criticalWarning, err := t.getWarningForDVM(dvm)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			if criticalWarning != nil {
 				t.Owner.Status.SetCondition(*criticalWarning)
@@ -768,15 +767,15 @@ func (t *Task) Run(ctx context.Context) error {
 	case EnsureStageBackup:
 		_, err := t.ensureStageBackup()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case StageBackupCreated:
 		backup, err := t.getStageBackup()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if backup == nil {
 			return errors.New("Backup not found")
@@ -791,7 +790,7 @@ func (t *Task) Run(ctx context.Context) error {
 				t.fail(StageBackupFailed, reasons)
 			} else {
 				if err = t.next(); err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 		} else {
@@ -813,18 +812,18 @@ func (t *Task) Run(ctx context.Context) error {
 	case EnsureStageBackupReplicated:
 		backup, err := t.getStageBackup()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if backup == nil {
 			return errors.New("Backup not found")
 		}
 		replicated, err := t.isBackupReplicated(backup)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if replicated {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Stage Velero Backup has not yet "+
@@ -836,11 +835,11 @@ func (t *Task) Run(ctx context.Context) error {
 		status, err := t.runHooks(migapi.PostBackupHookPhase)
 		if err != nil {
 			t.fail(PostBackupHooksFailed, []string{err.Error()})
-			return liberr.Wrap(err)
+			return err
 		}
 		if status {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("PostBackupHook(s) are incomplete. Waiting.")
@@ -850,11 +849,11 @@ func (t *Task) Run(ctx context.Context) error {
 		status, err := t.runHooks(migapi.PreRestoreHookPhase)
 		if err != nil {
 			t.fail(PreRestoreHooksFailed, []string{err.Error()})
-			return liberr.Wrap(err)
+			return err
 		}
 		if status {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("PreRestoreHooks(s) are incomplete. Waiting.")
@@ -863,15 +862,15 @@ func (t *Task) Run(ctx context.Context) error {
 	case EnsureStageRestore:
 		_, err := t.ensureStageRestore()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case StageRestoreCreated:
 		restore, err := t.getStageRestore()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if restore == nil {
 			return errors.New("Restore not found")
@@ -884,7 +883,7 @@ func (t *Task) Run(ctx context.Context) error {
 				t.fail(StageRestoreFailed, reasons)
 			} else {
 				if err = t.next(); err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 		} else {
@@ -899,19 +898,19 @@ func (t *Task) Run(ctx context.Context) error {
 	case EnsureStagePodsDeleted, CleanStaleStagePods:
 		err := t.ensureStagePodsDeleted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case EnsureStagePodsTerminated, WaitForStaleStagePodsTerminated:
 		terminated, err := t.ensureStagePodsTerminated()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if terminated {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Stage Pods have not finished terminating. Waiting")
@@ -921,27 +920,27 @@ func (t *Task) Run(ctx context.Context) error {
 		if !t.keepAnnotations() {
 			err := t.deleteAnnotations()
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case EnsureInitialBackupReplicated:
 		backup, err := t.getInitialBackup()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if backup == nil {
 			return errors.New("Backup not found")
 		}
 		replicated, err := t.isBackupReplicated(backup)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if replicated {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Initial Velero Backup has not yet "+
@@ -952,23 +951,23 @@ func (t *Task) Run(ctx context.Context) error {
 	case EnsureFinalRestore:
 		backup, err := t.getInitialBackup()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if backup == nil {
 			return errors.New("Backup not found")
 		}
 		_, err = t.ensureFinalRestore()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		t.Requeue = PollReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case FinalRestoreCreated:
 		restore, err := t.getFinalRestore()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if restore == nil {
 			return errors.New("Restore not found")
@@ -980,7 +979,7 @@ func (t *Task) Run(ctx context.Context) error {
 				t.fail(FinalRestoreFailed, reasons)
 			} else {
 				if err = t.next(); err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 		} else {
@@ -997,11 +996,11 @@ func (t *Task) Run(ctx context.Context) error {
 		if err != nil {
 			t.Log.Error(err, "Error getting final Velero Restore from target cluster.")
 			t.fail(PostRestoreHooksFailed, []string{err.Error()})
-			return liberr.Wrap(err)
+			return err
 		}
 		if status {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("PostRestoreHooks are incomplete. Waiting")
@@ -1010,11 +1009,11 @@ func (t *Task) Run(ctx context.Context) error {
 	case Verification:
 		completed, err := t.VerificationCompleted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if completed {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Verification is incomplete. Some Pods that existed on " +
@@ -1037,7 +1036,7 @@ func (t *Task) Run(ctx context.Context) error {
 			Durable:  true,
 		})
 		if err := t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case MigrationFailed:
 		t.Phase = Completed
@@ -1045,19 +1044,19 @@ func (t *Task) Run(ctx context.Context) error {
 	case DeleteMigrated:
 		err := t.deleteMigrated()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case EnsureMigratedDeleted:
 		deleted, err := t.ensureMigratedResourcesDeleted()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if deleted {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		} else {
 			t.Log.Info("Found resources associated with MigPlan on target cluster " +
@@ -1066,44 +1065,44 @@ func (t *Task) Run(ctx context.Context) error {
 		}
 	case DeleteBackups:
 		if err := t.deleteCorrelatedBackups(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case DeleteRestores:
 		if err := t.deleteCorrelatedRestores(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case DeleteHookJobs:
 		// Stops all the jobs for the hooks by killing the jobs and corresponding pods
 		status, err := t.stopHookJobs()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if status {
 			if err = t.next(); err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 		}
 	case DeleteDirectVolumeMigrationResources:
 		// Delete all DVM Resources created on the destination cluster
 		if err := t.deleteDirectVolumeMigrationResources(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case DeleteDirectImageMigrationResources:
 		// Delete all DIM Resources created on the destination cluster
 		if err := t.deleteDirectImageMigrationResources(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case Canceled:
 		t.Owner.Status.DeleteCondition(Canceling)
@@ -1116,13 +1115,13 @@ func (t *Task) Run(ctx context.Context) error {
 			Durable:  true,
 		})
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	case Completed:
 	default:
 		t.Requeue = NoReQ
 		if err = t.next(); err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -1191,14 +1190,14 @@ func (t *Task) initPipeline(prevItinerary string) error {
 			}
 			allFlags, err := t.allFlags(phase)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			if !allFlags {
 				continue
 			}
 			anyFlags, err := t.anyFlags(phase)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			if !anyFlags {
 				continue
@@ -1290,7 +1289,7 @@ func (t *Task) next() error {
 		next := t.Itinerary.Phases[n]
 		flag, err := t.allFlags(next)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if !flag {
 			t.Log.Info("Skipped phase due to flag evaluation.",
@@ -1299,7 +1298,7 @@ func (t *Task) next() error {
 		}
 		flag, err = t.anyFlags(next)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if !flag {
 			continue
@@ -1328,7 +1327,7 @@ func (t *Task) allFlags(phase Phase) (bool, error) {
 	if phase.all&StorageConversion != 0 {
 		isStorageConversion, err := t.isStorageConversionMigration()
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		if !isStorageConversion {
 			return false, nil
@@ -1340,7 +1339,7 @@ func (t *Task) allFlags(phase Phase) (bool, error) {
 	if phase.all&HasISs != 0 {
 		hasImageStream, err := t.hasImageStreams()
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		if !hasImageStream {
 			return false, nil
@@ -1361,7 +1360,7 @@ func (t *Task) allFlags(phase Phase) (bool, error) {
 	if phase.all&EnableImage != 0 {
 		isIntraCluster, err := t.PlanResources.MigPlan.IsIntraCluster(t.Client)
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		if isIntraCluster {
 			return false, nil
@@ -1379,11 +1378,11 @@ func (t *Task) allFlags(phase Phase) (bool, error) {
 	if phase.all&HasStageBackup != 0 {
 		//hasImageStream, err := t.hasImageStreams()
 		//if err != nil {
-		//	return false, liberr.Wrap(err)
+		//	return false, err
 		//}
 		isStorageConversion, err := t.isStorageConversionMigration()
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		if isStorageConversion || !t.hasStageBackup(anyPVs, moveSnapshotPVs) {
 			return false, nil
@@ -1425,7 +1424,7 @@ func (t *Task) anyFlags(phase Phase) (bool, error) {
 	if phase.any&StorageConversion != 0 {
 		isStorageConversion, err := t.isStorageConversionMigration()
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		if isStorageConversion {
 			return true, nil
@@ -1437,7 +1436,7 @@ func (t *Task) anyFlags(phase Phase) (bool, error) {
 	//if phase.any&HasISs != 0 {
 	//	hasImageStream, err := t.hasImageStreams()
 	//	if err != nil {
-	//		return false, liberr.Wrap(err)
+	//		return false, err
 	//	}
 	//	if hasImageStream {
 	//		return true, nil
@@ -1452,7 +1451,7 @@ func (t *Task) anyFlags(phase Phase) (bool, error) {
 	//if phase.any&EnableImage != 0 {
 	//	isIntraCluster, err := t.PlanResources.MigPlan.IsIntraCluster(t.Client)
 	//	if err != nil {
-	//		return false, liberr.Wrap(err)
+	//		return false, err
 	//	}
 	//	if !t.PlanResources.MigPlan.IsImageMigrationDisabled() && !isIntraCluster &&
 	//		!t.migrateState() && !t.isStorageConversionOrStateMigration() {
@@ -1471,11 +1470,11 @@ func (t *Task) anyFlags(phase Phase) (bool, error) {
 	if phase.any&HasStageBackup != 0 {
 		//hasImageStream, err := t.hasImageStreams()
 		//if err != nil {
-		//	return false, liberr.Wrap(err)
+		//	return false, err
 		//}
 		isStorageConversion, err := t.isStorageConversionMigration()
 		if err != nil {
-			return false, liberr.Wrap(err)
+			return false, err
 		}
 		if !isStorageConversion && t.hasStageBackup(anyPVs, moveSnapshotPVs) {
 			return true, nil
@@ -1581,7 +1580,7 @@ func (t *Task) quiesce() bool {
 func (t *Task) isStorageConversionMigration() (bool, error) {
 	isIntraCluster, err := t.PlanResources.MigPlan.IsIntraCluster(t.Client)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	if isIntraCluster && (t.migrateState() || t.rollback()) {
 		for srcNs, destNs := range t.PlanResources.MigPlan.GetNamespaceMapping() {
@@ -1742,7 +1741,7 @@ func (t *Task) getBothClients() ([]compat.Client, error) {
 	for _, cluster := range t.getBothClusters() {
 		client, err := cluster.GetClient(t.Client)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		list = append(list, client)
 	}
@@ -1754,7 +1753,7 @@ func (t *Task) getBothClients() ([]compat.Client, error) {
 func (t *Task) getBothClientsWithNamespaces() ([]compat.Client, [][]string, error) {
 	clientList, err := t.getBothClients()
 	if err != nil {
-		return nil, nil, liberr.Wrap(err)
+		return nil, nil, err
 	}
 	namespaceList := [][]string{t.sourceNamespaces(), t.destinationNamespaces()}
 

@@ -26,7 +26,6 @@ import (
 	"sync"
 	"time"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	pvdr "github.com/konveyor/mig-controller/pkg/cloudprovider"
 	"github.com/konveyor/mig-controller/pkg/compat"
 	"github.com/konveyor/mig-controller/pkg/remote"
@@ -284,11 +283,11 @@ func (m *MigCluster) GetClusterConfigMap(c k8sclient.Client) (*corev1.ConfigMap,
 	clusterConfigRef := types.NamespacedName{Name: ClusterConfigMapName, Namespace: VeleroNamespace}
 	err := c.Get(context.TODO(), clusterConfigRef, clusterConfig)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 
 	}
 	if clusterConfig.Data == nil {
-		return nil, liberr.Wrap(errors.New("failed to find data in cluster configmap"))
+		return nil, errors.Wrap(errors.New("failed to find data in cluster configmap"), "")
 
 	}
 	return clusterConfig, nil
@@ -298,11 +297,11 @@ func (m *MigCluster) GetClusterConfigMap(c k8sclient.Client) (*corev1.ConfigMap,
 func (m *MigCluster) GetRegistryImage(c k8sclient.Client) (string, error) {
 	clusterConfig, err := m.GetClusterConfigMap(c)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 	registryImage, ok := clusterConfig.Data[RegistryImageKey]
 	if !ok {
-		return "", liberr.Wrap(errors.Errorf("configmap key not found: %v", RegistryImageKey))
+		return "", errors.Wrap(errors.Errorf("configmap key not found: %v", RegistryImageKey), "")
 	}
 	return registryImage, nil
 }
@@ -311,7 +310,7 @@ func (m *MigCluster) GetRegistryImage(c k8sclient.Client) (string, error) {
 func (m *MigCluster) GetRegistryLivenessTimeout(c k8sclient.Client) (int32, error) {
 	clusterConfig, err := m.GetClusterConfigMap(c)
 	if err != nil {
-		return -1, liberr.Wrap(err)
+		return -1, err
 	}
 	registryLivenessTimeout, found := clusterConfig.Data[RegistryLivenessProbeTimeout]
 	// When registry timeout value is not found in the configmap, the user didn't intend to use a custom timeout
@@ -322,7 +321,7 @@ func (m *MigCluster) GetRegistryLivenessTimeout(c k8sclient.Client) (int32, erro
 	// When registry timeout is defined, but it is not a valid +ve integer, it indicates the intention of the user to set
 	// the value but has a mistake, therefore, we do not use the default value and return an error instead
 	if val, err := strconv.ParseInt(registryLivenessTimeout, 10, 32); err != nil {
-		return -1, liberr.Wrap(err)
+		return -1, err
 	} else if val < 1 {
 		return -1, fmt.Errorf("non-positive value set for Migration Registry liveness timeout")
 	} else {
@@ -334,7 +333,7 @@ func (m *MigCluster) GetRegistryLivenessTimeout(c k8sclient.Client) (int32, erro
 func (m *MigCluster) GetRegistryReadinessTimeout(c k8sclient.Client) (int32, error) {
 	clusterConfig, err := m.GetClusterConfigMap(c)
 	if err != nil {
-		return -1, liberr.Wrap(err)
+		return -1, err
 	}
 	registryReadinessTimeout, found := clusterConfig.Data[RegistryReadinessProbeTimeout]
 	// When registry timeout value is not found in the configmap, the user didn't intend to use a custom timeout
@@ -345,7 +344,7 @@ func (m *MigCluster) GetRegistryReadinessTimeout(c k8sclient.Client) (int32, err
 	// When registry timeout is defined, but it is not a valid +ve integer, it indicates the intention of the user to set
 	// the value but has a mistake, therefore, we do not use the default value and return an error instead
 	if val, err := strconv.ParseInt(registryReadinessTimeout, 10, 32); err != nil {
-		return -1, liberr.Wrap(err)
+		return -1, err
 	} else if val < 1 {
 		return -1, fmt.Errorf("non-positive value set for Migration Registry readiness timeout")
 	} else {
@@ -361,11 +360,11 @@ func (m *MigCluster) GetRsyncTransferImage(c k8sclient.Client) (string, error) {
 	}
 	clusterConfig, err := m.GetClusterConfigMap(client)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 	rsyncImage, ok := clusterConfig.Data[RsyncTransferImageKey]
 	if !ok {
-		return "", liberr.Wrap(errors.Errorf("configmap key not found: %v", RsyncTransferImageKey))
+		return "", errors.Wrap(errors.Errorf("configmap key not found: %v", RsyncTransferImageKey), "")
 	}
 	return rsyncImage, nil
 }
@@ -378,11 +377,11 @@ func (m *MigCluster) GetClusterSubdomain(c k8sclient.Client) (string, error) {
 	}
 	clusterConfig, err := m.GetClusterConfigMap(client)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 	clusterSubdomain, ok := clusterConfig.Data[ClusterSubdomainKey]
 	if !ok || clusterSubdomain == "" {
-		return "", liberr.Wrap(errors.Errorf("configmap key not found: %v", ClusterSubdomainKey))
+		return "", errors.Wrap(errors.Errorf("configmap key not found: %v", ClusterSubdomainKey), "")
 	}
 	return clusterSubdomain, nil
 }
@@ -391,13 +390,13 @@ func (m *MigCluster) GetClusterSubdomain(c k8sclient.Client) (string, error) {
 func (m *MigCluster) GetOperatorVersion(c k8sclient.Client) (string, error) {
 	clusterConfig, err := m.GetClusterConfigMap(c)
 	if err != nil {
-		return "", liberr.Wrap(err)
+		return "", err
 	}
 
 	operatorVersion, ok := clusterConfig.Data[OperatorVersionKey]
 	if !ok {
-		return "", liberr.Wrap(errors.Errorf("configmap key %v not found in configmap %v/%v for migcluster %v/%v",
-			OperatorVersionKey, clusterConfig.Namespace, clusterConfig.Name, m.Namespace, m.Name))
+		return "", errors.Wrap(errors.Errorf("configmap key %v not found in configmap %v/%v for migcluster %v/%v",
+			OperatorVersionKey, clusterConfig.Namespace, clusterConfig.Name, m.Namespace, m.Name), "")
 	}
 
 	return operatorVersion, nil
@@ -454,7 +453,7 @@ func (m *MigCluster) BuildRestConfig(c k8sclient.Client) (*rest.Config, error) {
 func (m *MigCluster) OperatorVersionMatchesConfigmap(c k8sclient.Client) (bool, error) {
 	clusterClient, err := m.GetClient(c)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	operatorVersion, err := m.GetOperatorVersion(clusterClient)
 	if operatorVersion == m.Status.OperatorVersion {
@@ -864,7 +863,7 @@ func (m *MigCluster) SetOperatorVersion(c k8sclient.Client) error {
 	oldOperatorVersion := m.Status.OperatorVersion
 	clusterClient, err := m.GetClient(c)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	// Ignore error here. Missing configmap/key is already raised to user in validation,
 	// we don't want reconcile to exit w/ error on MTC < 1.4.2. GetOperatorVersion will
@@ -881,7 +880,7 @@ func (m *MigCluster) SetOperatorVersion(c k8sclient.Client) error {
 	if oldOperatorVersion != newOperatorVersion {
 		clusterList, err := ListClusters(c)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		// Update all other MigClusters to propagate version checks
 		for _, cluster := range clusterList {
@@ -892,7 +891,7 @@ func (m *MigCluster) SetOperatorVersion(c k8sclient.Client) error {
 				cluster.Spec.Refresh = true
 				err := c.Update(context.Background(), &cluster)
 				if err != nil {
-					return liberr.Wrap(err)
+					return err
 				}
 			}
 		}

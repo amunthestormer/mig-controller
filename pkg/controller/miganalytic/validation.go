@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -42,7 +41,7 @@ const (
 func (r ReconcileMigAnalytic) validate(analytic *migapi.MigAnalytic) error {
 	err := r.validatePlan(analytic)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -68,7 +67,7 @@ func (r ReconcileMigAnalytic) validatePlan(analytic *migapi.MigAnalytic) error {
 		})
 		return nil
 	} else if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	//NotReady
@@ -82,7 +81,7 @@ func (r ReconcileMigAnalytic) validatePlan(analytic *migapi.MigAnalytic) error {
 		})
 		return nil
 	} else if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	return nil

@@ -3,7 +3,6 @@ package directvolumemigration
 import (
 	"context"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	migref "github.com/konveyor/mig-controller/pkg/reference"
 	"github.com/opentracing/opentracing-go"
@@ -83,15 +82,15 @@ func (r ReconcileDirectVolumeMigration) validate(ctx context.Context, direct *mi
 	}
 	err := r.validateSrcCluster(ctx, direct)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validateDestCluster(ctx, direct)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	err = r.validatePVCs(ctx, direct)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -118,7 +117,7 @@ func (r ReconcileDirectVolumeMigration) validateSrcCluster(ctx context.Context, 
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Not found
@@ -167,7 +166,7 @@ func (r ReconcileDirectVolumeMigration) validateDestCluster(ctx context.Context,
 
 	cluster, err := migapi.GetCluster(r, ref)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	// Not found
@@ -224,14 +223,14 @@ func (r ReconcileDirectVolumeMigration) validatePVCs(ctx context.Context, direct
 	// Get source cluster client
 	cluster, err := direct.GetSourceCluster(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	if cluster == nil || !cluster.Status.IsReady() {
 		return nil
 	}
 	client, err := cluster.GetClient(r)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	// Check if these PVCs actually exist on the source
 	// cluster
@@ -249,7 +248,7 @@ func (r ReconcileDirectVolumeMigration) validatePVCs(ctx context.Context, direct
 		if k8serror.IsNotFound(err) {
 			notFound = append(notFound, specPVC.Name)
 		} else {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	if len(notFound) > 0 {

@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/crane-lib/state_transfer/endpoint"
 	routeendpoint "github.com/konveyor/crane-lib/state_transfer/endpoint/route"
 	svcendpoint "github.com/konveyor/crane-lib/state_transfer/endpoint/service"
@@ -62,7 +61,7 @@ const (
 func (t *Task) ensureRsyncEndpoint() error {
 	destClient, err := t.getDestinationClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	dvmLabels := t.buildDVMLabels()
@@ -72,7 +71,7 @@ func (t *Task) ensureRsyncEndpoint() error {
 	if t.EndpointType == migapi.NodePort {
 		hostnames, err = getWorkerNodeHostnames(destClient)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 
@@ -126,7 +125,7 @@ func (t *Task) ensureRsyncEndpoint() error {
 
 		err = endpoint.Create(destClient)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -138,7 +137,7 @@ func (t *Task) getRsyncTransferOptions() ([]rsynctransfer.TransferOption, error)
 	o := settings.Settings.DvmOpts.RsyncOpts
 	rsyncPassword, err := t.getRsyncPassword()
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	transferOptions := []rsynctransfer.TransferOption{
 		rsynctransfer.StandardProgress(true),
@@ -155,24 +154,24 @@ func (t *Task) getRsyncTransferOptions() ([]rsynctransfer.TransferOption, error)
 	}
 	srcCluster, err := t.Owner.GetSourceCluster(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if srcCluster != nil {
 		srcTransferImage, err := srcCluster.GetRsyncTransferImage(t.Client)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		transferOptions = append(transferOptions,
 			rsynctransfer.RsyncClientImage(srcTransferImage))
 	}
 	destCluster, err := t.Owner.GetDestinationCluster(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	if destCluster != nil {
 		destTransferImage, err := destCluster.GetRsyncTransferImage(t.Client)
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		transferOptions = append(transferOptions,
 			rsynctransfer.RsyncServerImage(destTransferImage))
@@ -191,16 +190,16 @@ func (t *Task) getRsyncClientMutations(srcClient compat.Client, destClient compa
 
 	migration, err := t.Owner.GetMigrationForDVM(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	containerMutation.SecurityContext, err = t.getSecurityContext(srcClient, namespace, migration)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	resourceRequirements, err := t.getRsyncClientResourceRequirements(namespace, srcClient)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	containerMutation.Resources = resourceRequirements
 	transferOptions = append(transferOptions,
@@ -217,17 +216,17 @@ func (t *Task) getRsyncTransferServerMutations(client compat.Client, namespace s
 
 	resourceRequirements, err := t.getRsyncServerResourceRequirements(namespace, client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	containerMutation.Resources = resourceRequirements
 	migration, err := t.Owner.GetMigrationForDVM(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	containerMutation.SecurityContext, err = t.getSecurityContext(client, namespace, migration)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	transferOptions = append(transferOptions,
 		rsynctransfer.DestinationContainerMutation{
@@ -254,12 +253,12 @@ func (t *Task) getSecurityContext(client compat.Client, namespace string, migrat
 	// check if user explicitely asked to run Rsync Pods as root
 	isPrivileged, err := isRsyncPrivileged(client)
 	if err != nil {
-		return securityContext, liberr.Wrap(err)
+		return securityContext, err
 	}
 
 	isSuperPrivileged, err := isRsyncSuperPrivileged(client)
 	if err != nil {
-		return securityContext, liberr.Wrap(err)
+		return securityContext, err
 	}
 
 	trueBool := true
@@ -300,7 +299,7 @@ func (t *Task) getSecurityContext(client compat.Client, namespace string, migrat
 			// we check if the namespace has required exception labels set
 			privilegedLabelPresent, err = isPrivilegedLabelPresent(client, namespace)
 			if err != nil {
-				return securityContext, liberr.Wrap(err)
+				return securityContext, err
 			}
 			if !privilegedLabelPresent {
 				// warning in DVM since user wants to run rsync as root but the namespace is missing needed labels, so we are running rsync as non root
@@ -347,27 +346,27 @@ func (t *Task) getSecurityContext(client compat.Client, namespace string, migrat
 func (t *Task) ensureRsyncTransferServer() error {
 	destClient, err := t.getDestinationClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	nsMap, err := t.getNamespacedPVCPairs()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	err = t.buildDestinationLimitRangeMap(nsMap, destClient)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	transportOptions, err := t.getStunnelOptions()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	for bothNs, pvcPairs := range nsMap {
@@ -379,40 +378,40 @@ func (t *Task) ensureRsyncTransferServer() error {
 		)
 		endpoint, err := t.getEndpoint(destClient, destNs)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		stunnelTransport, err := stunneltransport.GetTransportFromKubeObjects(
 			srcClient, destClient, nnPair, endpoint, transportOptions)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		pvcList, err := transfer.NewPVCPairList(pvcPairs...)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		labels := t.buildDVMLabels()
 		labels["purpose"] = DirectVolumeMigrationRsync
 		rsyncOptions, err := t.getRsyncTransferOptions()
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		mutations, err := t.getRsyncTransferServerMutations(destClient, destNs)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		rsyncOptions = append(rsyncOptions, mutations...)
 		rsyncOptions = append(rsyncOptions, rsynctransfer.WithDestinationPodLabels(labels))
 		transfer, err := rsynctransfer.NewTransfer(
 			stunnelTransport, endpoint, srcClient.RestConfig(), destClient.RestConfig(), pvcList, rsyncOptions...)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		if transfer == nil {
 			return fmt.Errorf("transfer %s/%s not found", nnPair.Source().Namespace, nnPair.Source().Name)
 		}
 		err = transfer.CreateServer(destClient)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -424,27 +423,27 @@ func (t *Task) createRsyncTransferClients(srcClient compat.Client,
 
 	pvcNodeMap, err := t.getPVCNodeNameMap(srcClient)
 	if err != nil {
-		return statusList, liberr.Wrap(err)
+		return statusList, err
 	}
 
 	secInfo, err := t.getSourceSecurityGroupInfo(srcClient, nsMap)
 	if err != nil {
-		return statusList, liberr.Wrap(err)
+		return statusList, err
 	}
 
 	rsyncOptions, err := t.getRsyncTransferOptions()
 	if err != nil {
-		return statusList, liberr.Wrap(err)
+		return statusList, err
 	}
 
 	transportOptions, err := t.getStunnelOptions()
 	if err != nil {
-		return statusList, liberr.Wrap(err)
+		return statusList, err
 	}
 
 	migration, err := t.Owner.GetMigrationForDVM(t.Client)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 
 	checkLabels := isPSAEnforced(destClient)
@@ -454,7 +453,7 @@ func (t *Task) createRsyncTransferClients(srcClient compat.Client,
 		destNs := getDestNs(bothNs)
 		mutations, err := t.getRsyncClientMutations(srcClient, destClient, srcNs)
 		if err != nil {
-			return statusList, liberr.Wrap(err)
+			return statusList, err
 		}
 		rsyncOptions = append(rsyncOptions, mutations...)
 		nnPair := cranemeta.NewNamespacedPair(
@@ -463,12 +462,12 @@ func (t *Task) createRsyncTransferClients(srcClient compat.Client,
 		)
 		endpoint, err := t.getEndpoint(destClient, destNs)
 		if err != nil {
-			return statusList, liberr.Wrap(err)
+			return statusList, err
 		}
 		stunnelTransport, err := stunneltransport.GetTransportFromKubeObjects(
 			srcClient, destClient, nnPair, endpoint, transportOptions)
 		if err != nil {
-			return statusList, liberr.Wrap(err)
+			return statusList, err
 		}
 
 		labels := t.buildDVMLabels()
@@ -477,7 +476,7 @@ func (t *Task) createRsyncTransferClients(srcClient compat.Client,
 		if checkLabels {
 			privilegedLabelPresent, err = isPrivilegedLabelPresent(destClient, destNs)
 			if err != nil {
-				return nil, liberr.Wrap(err)
+				return nil, err
 			}
 		}
 
@@ -486,7 +485,7 @@ func (t *Task) createRsyncTransferClients(srcClient compat.Client,
 			migration.Spec.RunAsRoot = &isPrivileged
 		}
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 
 		for _, pvc := range pvcPairs {
@@ -1158,7 +1157,7 @@ func (t *Task) createPVProgressCR() error {
 			// make sure existing CRs that don't have required fields are deleted
 			err := t.deleteInvalidPVProgressCR(&dvmp)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			migapi.SetOwnerReference(t.Owner, t.Owner, &dvmp)
 			t.Log.Info("Creating DVMP on host MigCluster to track Rsync Pod completion on MigCluster",
@@ -1665,7 +1664,7 @@ func isPrivilegedLabelPresent(client compat.Client, namespace string) (bool, err
 	ns := &corev1.Namespace{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: namespace}, ns)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	if ns.Labels != nil {
@@ -1697,32 +1696,32 @@ func (t *Task) runRsyncOperations() (bool, bool, []string, error) {
 	var failureReasons []string
 	destClient, err := t.getDestinationClient()
 	if err != nil {
-		return false, false, failureReasons, liberr.Wrap(err)
+		return false, false, failureReasons, err
 	}
 	srcClient, err := t.getSourceClient()
 	if err != nil {
-		return false, false, failureReasons, liberr.Wrap(err)
+		return false, false, failureReasons, err
 	}
 	pvcMap, err := t.getNamespacedPVCPairs()
 	if err != nil {
-		return false, false, failureReasons, liberr.Wrap(err)
+		return false, false, failureReasons, err
 	}
 	err = t.buildSourceLimitRangeMap(pvcMap, srcClient)
 	if err != nil {
-		return false, false, failureReasons, liberr.Wrap(err)
+		return false, false, failureReasons, err
 	}
 	status, err := t.createRsyncTransferClients(srcClient, destClient, pvcMap)
 	if err != nil {
-		return false, false, failureReasons, liberr.Wrap(err)
+		return false, false, failureReasons, err
 	}
 	// report progress of pods
 	progressCompleted, err := t.hasAllProgressReportingCompleted()
 	if err != nil {
-		return false, false, failureReasons, liberr.Wrap(err)
+		return false, false, failureReasons, err
 	}
 	operationsCompleted, anyFailed, failureReasons, err := t.processRsyncOperationStatus(status, []error{})
 	if err != nil {
-		return false, false, failureReasons, liberr.Wrap(err)
+		return false, false, failureReasons, err
 	}
 	return operationsCompleted && progressCompleted, anyFailed, failureReasons, nil
 }
@@ -1740,7 +1739,7 @@ func (t *Task) processRsyncOperationStatus(status *rsyncClientOperationStatusLis
 			// attempt to categorize failures in any of the special failure categories we defined
 			failureReasons, err := t.reportAdvancedErrorHeuristics()
 			if err != nil {
-				return isComplete, anyFailed, failureReasons, liberr.Wrap(err)
+				return isComplete, anyFailed, failureReasons, err
 			}
 		}
 		return isComplete, anyFailed, failureReasons, nil
@@ -1791,7 +1790,7 @@ func (t *Task) reportAdvancedErrorHeuristics() ([]string, error) {
 	// check if the pods are failing due to a network misconfiguration causing Stunnel to timeout
 	isStunnelTimeout, err := t.hasAllRsyncClientPodsTimedOut()
 	if err != nil {
-		return reasons, liberr.Wrap(err)
+		return reasons, err
 	}
 	if isStunnelTimeout {
 		t.Owner.Status.SetCondition(migapi.Condition{
@@ -1811,7 +1810,7 @@ func (t *Task) reportAdvancedErrorHeuristics() ([]string, error) {
 	// check if the pods are failing due to 'No route to host' error
 	isNoRouteToHost, err := t.isAllRsyncClientPodsNoRouteToHost()
 	if err != nil {
-		return reasons, liberr.Wrap(err)
+		return reasons, err
 	}
 	if isNoRouteToHost {
 		t.Owner.Status.SetCondition(migapi.Condition{
@@ -1957,7 +1956,7 @@ func (t *Task) getAllPodsForOperation(client compat.Client, operation migapi.Rsy
 func (t *Task) getLatestPodForOperation(client compat.Client, operation migapi.RsyncOperation) (*corev1.Pod, error) {
 	podList, err := t.getAllPodsForOperation(client, operation)
 	if err != nil {
-		return nil, liberr.Wrap(err)
+		return nil, err
 	}
 	// if no existing pods found, it probably means we need to start fresh
 	if len(podList.Items) < 1 {
@@ -2073,7 +2072,7 @@ func (t *Task) getEndpoint(client client.Client, namespace string) (endpoint.End
 			Namespace: namespace,
 		})
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		return endpoint, nil
 	default:
@@ -2082,7 +2081,7 @@ func (t *Task) getEndpoint(client client.Client, namespace string) (endpoint.End
 			Namespace: namespace,
 		})
 		if err != nil {
-			return nil, liberr.Wrap(err)
+			return nil, err
 		}
 		return endpoint, nil
 	}
@@ -2107,7 +2106,7 @@ func getWorkerNodeHostnames(client client.Client) ([]string, error) {
 		"node-role.kubernetes.io/worker": "",
 	})
 	if err != nil {
-		return hostnames, liberr.Wrap(err)
+		return hostnames, err
 	}
 	for _, node := range nodeList.Items {
 		hostname := ""

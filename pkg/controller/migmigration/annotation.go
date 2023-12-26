@@ -7,7 +7,6 @@ import (
 	"path"
 	"strings"
 
-	liberr "github.com/konveyor/controller/pkg/error"
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,13 +35,13 @@ func (t *Task) annotateStageResources() (bool, error) {
 	t.Log.V(4).Info("Starting annotation of PVs, PVCs, Pods Namespaces")
 	sourceClient, err := t.getSourceClient()
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	itemsUpdated := 0
 	// Namespaces
 	itemsUpdated, err = t.labelNamespaces(sourceClient, itemsUpdated)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	if itemsUpdated > AnnotationsPerReconcile {
 		return false, nil
@@ -50,7 +49,7 @@ func (t *Task) annotateStageResources() (bool, error) {
 	// Pods
 	itemsUpdated, serviceAccounts, err := t.annotatePods(sourceClient, itemsUpdated)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	if itemsUpdated > AnnotationsPerReconcile {
 		return false, nil
@@ -58,7 +57,7 @@ func (t *Task) annotateStageResources() (bool, error) {
 	// PV & PVCs
 	itemsUpdated, err = t.annotatePVs(sourceClient, itemsUpdated)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 	if itemsUpdated > AnnotationsPerReconcile {
 		return false, nil
@@ -66,7 +65,7 @@ func (t *Task) annotateStageResources() (bool, error) {
 	// Service accounts used by stage pods.
 	itemsUpdated, err = t.labelServiceAccounts(sourceClient, serviceAccounts, itemsUpdated)
 	if err != nil {
-		return false, liberr.Wrap(err)
+		return false, err
 	}
 
 	klog.Infof("ItemUpdated number %v", itemsUpdated)
@@ -78,7 +77,7 @@ func (t *Task) annotateStageResources() (bool, error) {
 	//if t.indirectImageMigration() {
 	//	itemsUpdated, err = t.labelImageStreams(sourceClient, itemsUpdated)
 	//	if err != nil {
-	//		return false, liberr.Wrap(err)
+	//		return false, err
 	//	}
 	//	if itemsUpdated > AnnotationsPerReconcile {
 	//		return false, nil
@@ -106,7 +105,7 @@ func (t *Task) getResticVolumes(client k8sclient.Client, pod corev1.Pod) ([]stri
 			},
 			&pvc)
 		if err != nil {
-			return nil, nil, liberr.Wrap(err)
+			return nil, nil, err
 		}
 		pvAction := findPVAction(pvs, pvc.Spec.VolumeName)
 		if pvAction == migapi.PvCopyAction {
@@ -135,7 +134,7 @@ func (t *Task) labelNamespaces(client k8sclient.Client, itemsUpdated int) (int, 
 			},
 			&namespace)
 		if err != nil {
-			return itemsUpdated, liberr.Wrap(err)
+			return itemsUpdated, err
 		}
 		if namespace.Labels == nil {
 			namespace.Labels = make(map[string]string)
@@ -148,7 +147,7 @@ func (t *Task) labelNamespaces(client k8sclient.Client, itemsUpdated int) (int, 
 			"namespace", namespace.Name)
 		err = client.Update(context.TODO(), &namespace)
 		if err != nil {
-			return itemsUpdated, liberr.Wrap(err)
+			return itemsUpdated, err
 		}
 		itemsUpdated++
 		if itemsUpdated > AnnotationsPerReconcile {
@@ -172,14 +171,14 @@ func (t *Task) annotatePods(client k8sclient.Client, itemsUpdated int) (int, Ser
 	options := k8sclient.MatchingLabels(t.Owner.GetCorrelationLabels())
 	err := client.List(context.TODO(), &list, options)
 	if err != nil {
-		return itemsUpdated, nil, liberr.Wrap(err)
+		return itemsUpdated, nil, err
 	}
 	total := len(list.Items)
 	for i, pod := range list.Items {
 		// Annotate PVCs.
 		volumes, verifyVolumes, err := t.getResticVolumes(client, pod)
 		if err != nil {
-			return itemsUpdated, nil, liberr.Wrap(err)
+			return itemsUpdated, nil, err
 		}
 		// Restic annotation used to specify volumes.
 		if pod.Annotations == nil {
@@ -201,7 +200,7 @@ func (t *Task) annotatePods(client k8sclient.Client, itemsUpdated int) (int, Ser
 			"pod", path.Join(pod.Namespace, pod.Name))
 		err = client.Update(context.TODO(), &pod)
 		if err != nil {
-			return itemsUpdated, nil, liberr.Wrap(err)
+			return itemsUpdated, nil, err
 		}
 		itemsUpdated++
 		sa := pod.Spec.ServiceAccountName
@@ -239,7 +238,7 @@ func (t *Task) annotatePVs(client k8sclient.Client, itemsUpdated int) (int, erro
 			},
 			&pvResource)
 		if err != nil {
-			return itemsUpdated, liberr.Wrap(err)
+			return itemsUpdated, err
 		}
 		if pvResource.Annotations == nil {
 			pvResource.Annotations = make(map[string]string)
@@ -266,7 +265,7 @@ func (t *Task) annotatePVs(client k8sclient.Client, itemsUpdated int) (int, erro
 			"persistentVolume", pv.Name)
 		err = client.Update(context.TODO(), &pvResource)
 		if err != nil {
-			return itemsUpdated, liberr.Wrap(err)
+			return itemsUpdated, err
 		}
 
 		pvcResource := corev1.PersistentVolumeClaim{}
@@ -278,7 +277,7 @@ func (t *Task) annotatePVs(client k8sclient.Client, itemsUpdated int) (int, erro
 			},
 			&pvcResource)
 		if err != nil {
-			return itemsUpdated, liberr.Wrap(err)
+			return itemsUpdated, err
 		}
 		if pvcResource.Annotations == nil {
 			pvcResource.Annotations = make(map[string]string)
@@ -308,7 +307,7 @@ func (t *Task) annotatePVs(client k8sclient.Client, itemsUpdated int) (int, erro
 			"persistentVolumeClaim", path.Join(pv.PVC.Namespace, pv.PVC.GetSourceName()))
 		err = client.Update(context.TODO(), &pvcResource)
 		if err != nil {
-			return itemsUpdated, liberr.Wrap(err)
+			return itemsUpdated, err
 		}
 
 		itemsUpdated++
@@ -332,7 +331,7 @@ func (t *Task) labelServiceAccounts(client k8sclient.Client, serviceAccounts Ser
 		options := k8sclient.InNamespace(ns)
 		err := client.List(context.TODO(), &list, options)
 		if err != nil {
-			return itemsUpdated, liberr.Wrap(err)
+			return itemsUpdated, err
 		}
 		total := len(list.Items)
 		for i, sa := range list.Items {
@@ -348,7 +347,7 @@ func (t *Task) labelServiceAccounts(client k8sclient.Client, serviceAccounts Ser
 			sa.Labels[migapi.IncludedInStageBackupLabel] = t.UID()
 			err = client.Update(context.TODO(), &sa)
 			if err != nil {
-				return itemsUpdated, liberr.Wrap(err)
+				return itemsUpdated, err
 			}
 			log.Info("Added annotations/labels to source cluster Service Account.",
 				"serviceAccount", path.Join(sa.Namespace, sa.Name))
@@ -386,7 +385,7 @@ func (t *Task) labelServiceAccounts(client k8sclient.Client, serviceAccounts Ser
 //				"imageStream", path.Join(is.Namespace, is.Name))
 //			err = client.Update(context.Background(), &is)
 //			if err != nil {
-//				return itemsUpdated, liberr.Wrap(err)
+//				return itemsUpdated, err
 //			}
 //			itemsUpdated++
 //			if itemsUpdated > AnnotationsPerReconcile {
@@ -403,33 +402,33 @@ func (t *Task) labelServiceAccounts(client k8sclient.Client, serviceAccounts Ser
 func (t *Task) deleteAnnotations() error {
 	clients, namespaceList, err := t.getBothClientsWithNamespaces()
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	for i, client := range clients {
 		err = t.deletePVCAnnotations(client, namespaceList[i])
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		err = t.deletePVAnnotations(client)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		err = t.deletePodAnnotations(client, namespaceList[i])
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		err = t.deleteNamespaceLabels(client, namespaceList[i])
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		err = t.deleteServiceAccountLabels(client)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		//err = t.deleteImageStreamLabels(client, namespaceList[i])
 		//if err != nil {
-		//	return liberr.Wrap(err)
+		//	return err
 		//}
 	}
 
@@ -443,7 +442,7 @@ func (t *Task) deletePodAnnotations(client k8sclient.Client, namespaceList []str
 		podList := corev1.PodList{}
 		err := client.List(context.TODO(), &podList, options)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		for _, pod := range podList.Items {
 			if !pod.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -471,7 +470,7 @@ func (t *Task) deletePodAnnotations(client k8sclient.Client, namespaceList []str
 			}
 			err = client.Update(context.TODO(), &pod)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			log.Info("Velero Annotations/Labels removed on Pod.",
 				"pod", path.Join(pod.Namespace, pod.Name))
@@ -497,12 +496,12 @@ func (t *Task) deleteNamespaceLabels(client k8sclient.Client, namespaceList []st
 			continue
 		}
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		delete(namespace.Labels, migapi.IncludedInStageBackupLabel)
 		err = client.Update(context.TODO(), &namespace)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 	}
 	return nil
@@ -515,7 +514,7 @@ func (t *Task) deletePVCAnnotations(client k8sclient.Client, namespaceList []str
 		pvcList := corev1.PersistentVolumeClaimList{}
 		err := client.List(context.TODO(), &pvcList, options)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		for _, pvc := range pvcList.Items {
 			if pvc.Spec.VolumeName == "" {
@@ -547,7 +546,7 @@ func (t *Task) deletePVCAnnotations(client k8sclient.Client, namespaceList []str
 			}
 			err = client.Update(context.TODO(), &pvc)
 			if err != nil {
-				return liberr.Wrap(err)
+				return err
 			}
 			log.Info("Velero Annotations/Labels removed on PersistentVolumeClaim.",
 				"persistentVolumeClaim", path.Join(pvc.Namespace, pvc.Name))
@@ -566,7 +565,7 @@ func (t *Task) deletePVAnnotations(client k8sclient.Client) error {
 	pvList := corev1.PersistentVolumeList{}
 	err := client.List(context.TODO(), &pvList, options)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, pv := range pvList.Items {
 		delete(pv.Labels, migapi.IncludedInStageBackupLabel)
@@ -574,7 +573,7 @@ func (t *Task) deletePVAnnotations(client k8sclient.Client) error {
 		delete(pv.Annotations, migapi.PvStorageClassAnnotation)
 		err = client.Update(context.TODO(), &pv)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		log.Info("Velero Annotations/Labels removed on PersistentVolume.",
 			"persistentVolume", path.Join(pv.Namespace, pv.Name))
@@ -592,13 +591,13 @@ func (t *Task) deleteServiceAccountLabels(client k8sclient.Client) error {
 	pvList := corev1.ServiceAccountList{}
 	err := client.List(context.TODO(), &pvList, options)
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 	for _, sa := range pvList.Items {
 		delete(sa.Labels, migapi.IncludedInStageBackupLabel)
 		err = client.Update(context.TODO(), &sa)
 		if err != nil {
-			return liberr.Wrap(err)
+			return err
 		}
 		log.Info("Velero Annotations/Labels removed on ServiceAccount.",
 			"serviceAccount", path.Join(sa.Namespace, sa.Name))
@@ -615,13 +614,13 @@ func (t *Task) deleteServiceAccountLabels(client k8sclient.Client) error {
 //	imageStreamList := imagev1.ImageStreamList{}
 //	err := client.List(context.TODO(), &imageStreamList, options)
 //	if err != nil {
-//		return liberr.Wrap(err)
+//		return err
 //	}
 //	for _, is := range imageStreamList.Items {
 //		delete(is.Labels, migapi.IncludedInStageBackupLabel)
 //		err = client.Update(context.Background(), &is)
 //		if err != nil {
-//			return liberr.Wrap(err)
+//			return err
 //		}
 //		log.Info("Velero Annotations/Labels removed on ImageStream.",
 //			"imageStream", path.Join(is.Namespace, is.Name))

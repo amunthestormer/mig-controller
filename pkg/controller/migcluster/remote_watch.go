@@ -15,7 +15,6 @@ package migcluster
 
 import (
 	"context"
-	liberr "github.com/konveyor/controller/pkg/error"
 	"strconv"
 
 	migapi "github.com/konveyor/mig-controller/pkg/apis/migration/v1alpha1"
@@ -33,7 +32,7 @@ func StartRemoteWatch(r *ReconcileMigCluster, config remote.ManagerConfig) error
 
 	mgr, err := manager.New(config.RemoteRestConfig, manager.Options{Scheme: config.Scheme, MetricsBindAddress: "0"})
 	if err != nil {
-		return liberr.Wrap(err)
+		return err
 	}
 
 	ctx := context.TODO()
