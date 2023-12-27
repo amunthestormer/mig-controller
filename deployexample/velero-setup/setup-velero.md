@@ -10,7 +10,7 @@ kubectl -n cluster-migrate-test-app annotate pod/POD_NAME backup.velero.io/backu
 ```
 - Create Backup
 ```shell
-velero backup create migrate-backup --include-namespaces cluster-migrate-test-app --include-cluster-resources --storage-location default  --volume-snapshot-locations default
+velero backup create migrate-backup --include-namespaces cluster-migrate-test-app --storage-location default  --volume-snapshot-locations default
 ```
 ```shell
 velero backup create migrate-backup --include-namespaces cluster-migrate-test-app --storage-location default  --volume-snapshot-locations default --include-resources pods,deployments,pvc,service
