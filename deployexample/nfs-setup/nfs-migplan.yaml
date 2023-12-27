@@ -1,0 +1,40 @@
+apiVersion: migration.openshift.io/v1alpha1
+kind: MigPlan
+metadata:
+  name: nfs-migplan-example
+  namespace: velero
+spec:
+  destMigClusterRef:
+    name: host
+    namespace: velero
+  srcMigClusterRef:
+    name: source-cluster
+    namespace: velero
+  indirectImageMigration: true
+  indirectVolumeMigration: true
+  migStorageRef:
+    name: gcp-bucket
+    namespace: velero
+  namespaces:
+    - nfs-migrate
+  persistentVolumes:
+    - capacity: 10Gi
+      name: pvc-963e4635-c13e-416d-80b0-913a0a95cefb
+      storageClass: nfs-csi
+      pvc:
+        accessModes:
+          - ReadWriteMany
+        hasReference: true
+        name: pvc-demo-nfs-dynamic
+        namespace: nfs-migrate
+      selection:
+        action: copy
+        copyMethod: filesystem
+        storageClass: nfs-csi
+      supported:
+        actions:
+          - copy
+          - move
+          - skip
+        copyMethods:
+          - filesystem

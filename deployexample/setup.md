@@ -3,7 +3,7 @@
 - Deploy 2 cụm K8s: 
   - Source cluster: k8s-vdt-2023 dedicated
   - Destination cluster: k8s-test managed
-  - Resource migrated: [pod-pvc-demo.yaml](pod-pvc-demo.yaml)
+  - Resource migrated: [pod-pvc-demo.yaml](velero-setup/pod-pvc-demo.yaml)
     - ```echo hi > usr/share/nginx/html/hi.txt```
     - ```cat usr/share/nginx/html/hi.txt```
 - Tạo resource để migrate trên cụm source:
@@ -72,8 +72,8 @@ kubectl apply -f sa-secret-remote.yaml
   - host-cluster.yaml chỉ có một trường duy nhất isHostCluster: true
   - source-cluster.yaml sẽ có thêm 3 trường thông tin: url, CA và serviceaccount token của remote cluster để migcontroller có thể làm việc với source(remote) cluster
 ```shell
-kubectl apply -f host-cluster.yaml
-kubectl apply -f source-cluster.yaml
+kubectl apply -f on-host-cluster/on-host-cluster.yaml
+kubectl apply -f on-host-cluster/source-cluster.yaml
 kubectl get migcluster -A
 ```
 ![migcluster.png](img/migcluster.png)

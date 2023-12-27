@@ -45,6 +45,10 @@ spec:
         ports:
          - containerPort: 80
            name: "http-server"
+        command:
+          - "/bin/bash"
+          - "-ce"
+          - echo hi2 > /usr/share/nginx/html/hi.txt; while true; do sleep 30; done
         volumeMounts:
          - mountPath: "/usr/share/nginx/html"
            name: pvc-demo-vol
