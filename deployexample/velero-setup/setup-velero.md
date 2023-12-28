@@ -2,7 +2,7 @@
 
 - Install
 ```shell
-velero install --provider gcp --plugins velero/velero-plugin-for-gcp:v1.7.1 --bucket mig-controller-demo --secret-file ~/Desktop/forkrepo/mig-controller/deployexample/gcp-credentials --use-volume-snapshots false --use-node-agent
+velero install --provider gcp --plugins velero/velero-plugin-for-gcp:v1.8.2 --bucket mig-controller-demo --secret-file ~/Desktop/forkrepo/mig-controller/deployexample/gcp-credentials --use-volume-snapshots false --use-node-agent
 ```
 - Annotate Restore Pod for Restic
 ```shell
