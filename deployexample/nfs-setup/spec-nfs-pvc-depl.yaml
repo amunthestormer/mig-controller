@@ -37,7 +37,7 @@ spec:
           command:
             - "/bin/bash"
             - "-c"
-            - set -eo pipefail; echo hi > /mnt/nfs/outfile;  while true; do sleep 30; done
+            - echo $HOSTNAME $(date) >> /mnt/nfs/outfile;  while true; do sleep 30; done
       volumes:
         - name: nfs
           persistentVolumeClaim:

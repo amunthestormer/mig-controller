@@ -1,0 +1,12 @@
+apiVersion: migration.openshift.io/v1alpha1
+kind: MigMigration
+metadata:
+  name: spec-nfs-migmigration-example
+  namespace: velero
+spec:
+  migPlanRef:
+    name: spec-nfs-migplan-example
+    namespace: velero
+  stage: false
+  migrateState: false
+  quiescePods: true
