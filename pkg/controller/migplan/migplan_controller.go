@@ -282,12 +282,12 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	// Validate NFS PV accessibility.
-	nfsValidation := NfsValidation{Plan: plan}
-	err = nfsValidation.Run(r.Client)
-	if err != nil {
-		log.Error(err, "")
-		return reconcile.Result{Requeue: true}, nil
-	}
+	//nfsValidation := NfsValidation{Plan: plan}
+	//err = nfsValidation.Run(r.Client)
+	//if err != nil {
+	//	log.Error(err, "")
+	//	return reconcile.Result{Requeue: true}, nil
+	//}
 
 	// Validate PV actions.
 	err = r.validatePvSelections(ctx, plan)

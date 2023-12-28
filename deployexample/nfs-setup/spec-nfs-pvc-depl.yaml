@@ -1,40 +1,44 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pvc-demo-nfs-dynamic2
+  name: pvc-demo-nfs-spec
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 10Gi
-  storageClassName: nfs-csi
+      storage: 5Gi
+  storageClassName: static-nfs-sc
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deployment-nfs2
+  name: spec-deployment-nfs
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: deployment-nfs
+      name: spec-deployment-nfs
   template:
     metadata:
-      name: deployment-nfs
+      name: spec-deployment-nfs
       labels:
-        name: deployment-nfs
+        name: spec-deployment-nfs
     spec:
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
-        - name: deployment-nfs
+        - name: spec-deployment-nfs
           image: nginx
           volumeMounts:
             - name: nfs
               mountPath: "/mnt/nfs"
               readOnly: false
+          command:
+            - "/bin/bash"
+            - "-c"
+            - set -eo pipefail; echo hi > /mnt/nfs/outfile;  while true; do sleep 30; done
       volumes:
         - name: nfs
           persistentVolumeClaim:
-            claimName: pvc-demo-nfs-dynamic2
+            claimName: pvc-demo-nfs-spec

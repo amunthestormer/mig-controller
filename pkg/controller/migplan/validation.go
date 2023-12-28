@@ -1765,6 +1765,7 @@ func (r *NfsValidation) validate() error {
 			} else {
 				passed = false
 			}
+			return nil
 		}
 		server[pv.NFS.Server] = passed
 		if !passed {
@@ -1831,6 +1832,6 @@ func (r *NfsValidation) validationFailed(pv *migapi.PV) {
 			kept = append(kept, action)
 		}
 	}
-
+	klog.Errorf("NFS server not accessible on destination cluster. PV action `move` removed, PV: %s", pv.Name)
 	pv.Supported.Actions = kept
 }

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: spec-nfs-pv
+spec:
+  storageClassName: static-nfs-sc
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  mountOptions:
+    - hard
+    - nfsvers=4.0
+  nfs:
+    path: "/shares/share-d1dd293d-eaa2-4c1a-93d9-8091febf6258/"
+    server: "10.1.0.100"
