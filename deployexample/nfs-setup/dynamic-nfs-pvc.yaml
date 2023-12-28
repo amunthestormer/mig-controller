@@ -33,7 +33,7 @@ spec:
           command:
             - "/bin/bash"
             - "-c"
-            - echo hi >> /mnt/nfs/outfile;  while true; do sleep 30; done
+            - echo hi > /mnt/nfs/outfile;  while true; do sleep 30; done
           volumeMounts:
             - name: nfs
               mountPath: "/mnt/nfs"

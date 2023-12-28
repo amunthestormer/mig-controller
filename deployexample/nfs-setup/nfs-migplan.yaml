@@ -18,8 +18,8 @@ spec:
   namespaces:
     - nfs-migrate
   persistentVolumes:
-    - capacity: 10Gi
-      name: pvc-963e4635-c13e-416d-80b0-913a0a95cefb
+    - capacity: 5Gi
+      name: pvc-3b4a15fd-8de7-4ff0-bcd3-74461d833809
       storageClass: nfs-csi
       pvc:
         accessModes:
@@ -28,7 +28,8 @@ spec:
         name: pvc-demo-nfs-dynamic
         namespace: nfs-migrate
       selection:
-        action: move
+        action: copy
+        copyMethod: snapshot
         storageClass: nfs-csi
       supported:
         actions:
