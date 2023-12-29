@@ -16,7 +16,7 @@ spec:
     name: gcp-bucket
     namespace: velero
   namespaces:
-    - nfs-migrate
+    - nfs-snapshot-migrate
   persistentVolumes:
     - capacity: 5Gi
       name: pvc-3b4a15fd-8de7-4ff0-bcd3-74461d833809

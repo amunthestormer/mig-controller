@@ -281,7 +281,7 @@ func (r *ReconcileMigPlan) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Validate NFS PV accessibility.
+	//Validate NFS PV accessibility.
 	//nfsValidation := NfsValidation{Plan: plan}
 	//err = nfsValidation.Run(r.Client)
 	//if err != nil {

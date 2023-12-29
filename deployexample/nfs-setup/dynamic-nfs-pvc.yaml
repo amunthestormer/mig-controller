@@ -33,7 +33,7 @@ spec:
           command:
             - "/bin/bash"
             - "-c"
-            - echo hi > /mnt/nfs/outfile;  while true; do sleep 30; done
+            - echo $(date) >> /mnt/nfs/outfile;  while true; do sleep 30; done
           volumeMounts:
             - name: nfs
               mountPath: "/mnt/nfs"
@@ -41,4 +41,4 @@ spec:
       volumes:
         - name: nfs
           persistentVolumeClaim:
-            claimName: pvc-demo-nfs-dynamic
+            claimName: pvc-demo-nfps-dynamic
