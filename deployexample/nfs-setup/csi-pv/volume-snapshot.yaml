@@ -1,10 +1,10 @@
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
-  name: test-nfs-snapshot
+  name: csi-nfs-vs
   labels:
     velero.io/csi-volumesnapshot-class: "true"
 spec:
   volumeSnapshotClassName: csi-nfs-snapclass
   source:
-    persistentVolumeClaimName: pvc-demo-nfs-dynamic
+    persistentVolumeClaimName: csi-nfs-pvc

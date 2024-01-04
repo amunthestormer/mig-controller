@@ -3,7 +3,7 @@
 - Deploy 2 cụm K8s: 
   - Source cluster: k8s-vdt-2023 dedicated
   - Destination cluster: k8s-test managed
-  - Resource migrated: [pod-pvc-demo.yaml](velero-setup/pod-pvc-demo.yaml)
+  - Resource migrated: [pod-pvc-demo.yaml](on-source-cluster/pod-pvc-demo.yaml)
     - ```echo hi > usr/share/nginx/html/hi.txt```
     - ```cat usr/share/nginx/html/hi.txt```
 - Tạo resource để migrate trên cụm source:
@@ -169,7 +169,7 @@ data:
   STAGE_IMAGE: "alpine:latest"
 ```
 ```shell
-kubectl apply -f mig-cluster-configmap.yaml
+kubectl apply -f stage-pod-image-configmap.yaml
 ```
 - Tạo CR MigMigration để mig-controller thực hiện migrate
 ```yaml
@@ -187,7 +187,7 @@ spec:
   quiescePods: true # Tạm dừng application khi migrate
 ```
 ```shell
-kubectl apply -f mimigration-example.yaml
+kubectl apply -f mimigration.yaml
 ```
 
 #### Quá trình:

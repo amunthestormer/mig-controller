@@ -1,7 +1,7 @@
 apiVersion: migration.openshift.io/v1alpha1
 kind: MigPlan
 metadata:
-  name: migplan-example
+  name: default-migplan
   namespace: velero
 spec:
   destMigClusterRef:
@@ -19,13 +19,13 @@ spec:
     - cluster-migrate-test-app
   persistentVolumes:
     - capacity: 5Gi
-      name: pvc-9bb450ee-79bb-46ef-9808-3578135931d3
+      name: pvc-d99c1a3d-c526-45b7-8572-5507d8bdd7b0
       storageClass: csi-sc-viettelplugin-ssd
       pvc:
         accessModes:
           - ReadWriteOnce
         hasReference: true
-        name: pod-demo
+        name: pvc-demo
         namespace: cluster-migrate-test-app
       selection:
         action: copy
@@ -36,3 +36,44 @@ spec:
           - copy
         copyMethods:
           - filesystem
+    - capacity: 5Gi
+      name: spec-nfs-pv
+      storageClass: static-nfs-sc
+      pvc:
+        accessModes:
+          - ReadWriteMany
+        hasReference: true
+        name: spec-nfs-pvc
+        namespace: cluster-migrate-test-app
+      selection:
+        action: move
+        storageClass: static-nfs-sc
+      supported:
+        actions:
+          - copy
+          - move
+          - skip
+        copyMethods:
+          - filesystem
+          - snapshot
+    - capacity: 5Gi
+      name: pvc-f70deda4-48a9-4035-8ee3-3073c8e2cd67
+      storageClass: csi-nfs-sc
+      pvc:
+        accessModes:
+          - ReadWriteMany
+        hasReference: true
+        name: csi-nfs-pvc
+        namespace: cluster-migrate-test-app
+      selection:
+        action: copy
+        copyMethod: snapshot
+        storageClass: csi-nfs-sc
+      supported:
+        actions:
+          - copy
+          - move
+          - skip
+        copyMethods:
+          - filesystem
+          - snapshot

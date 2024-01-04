@@ -1,7 +1,7 @@
 apiVersion: migration.openshift.io/v1alpha1
 kind: MigPlan
 metadata:
-  name: nfs-migplan-example
+  name: spec-nfs-migplan
   namespace: velero
 spec:
   destMigClusterRef:
@@ -16,21 +16,20 @@ spec:
     name: gcp-bucket
     namespace: velero
   namespaces:
-    - nfs-snapshot-migrate
+    - spec-nfs-namespace
   persistentVolumes:
     - capacity: 5Gi
-      name: pvc-3b4a15fd-8de7-4ff0-bcd3-74461d833809
-      storageClass: nfs-csi
+      name: spec-nfs-pv
+      storageClass: static-nfs-sc
       pvc:
         accessModes:
           - ReadWriteMany
         hasReference: true
-        name: pvc-demo-nfs-dynamic
-        namespace: nfs-migrate
+        name: spec-nfs-pvc
+        namespace: spec-nfs-namespace
       selection:
-        action: copy
-        copyMethod: snapshot
-        storageClass: nfs-csi
+        action: move
+        storageClass: static-nfs-sc
       supported:
         actions:
           - copy

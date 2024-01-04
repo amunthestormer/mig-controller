@@ -1,44 +1,44 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pvc-demo-nfs-spec
+  name: csi-nfs-pvc
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
       storage: 5Gi
-  storageClassName: static-nfs-sc
+  storageClassName: csi-nfs-sc
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spec-deployment-nfs
+  name: csi-nfs-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: spec-deployment-nfs
+      name: csi-nfs-deployment
   template:
     metadata:
-      name: spec-deployment-nfs
+      name: csi-nfs-deployment
       labels:
-        name: spec-deployment-nfs
+        name: csi-nfs-deployment
     spec:
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
-        - name: spec-deployment-nfs
+        - name: csi-nfs-nginx-container
           image: nginx
+          command:
+            - "/bin/bash"
+            - "-c"
+            - echo $(date) >> /mnt/nfs/outfile;  while true; do sleep 30; done
           volumeMounts:
             - name: nfs
               mountPath: "/mnt/nfs"
               readOnly: false
-          command:
-            - "/bin/bash"
-            - "-c"
-            - echo $HOSTNAME $(date) >> /mnt/nfs/outfile;  while true; do sleep 30; done
       volumes:
         - name: nfs
           persistentVolumeClaim:
-            claimName: pvc-demo-nfs-spec
+            claimName: csi-nfs-pvc

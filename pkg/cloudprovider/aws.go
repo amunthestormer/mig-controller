@@ -499,6 +499,5 @@ func (r *Ec2Test) delete(ssn *session.Session, volumeId *string) error {
 		&ec2.DeleteVolumeInput{
 			VolumeId: volumeId,
 		})
-
 	return err
 }
