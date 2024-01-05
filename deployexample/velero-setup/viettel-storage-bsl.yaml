@@ -1,0 +1,19 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: viettel-storage-bsl
+  namespace: velero
+spec:
+  provider: aws
+  default: true
+  accessMode: ReadWrite
+  objectStorage:
+    bucket: "huongdt162-velero"
+    credential:
+      key: cloud
+      name: os-credentials
+  config:
+    insecureSkipTLSVerify: "true"
+    region: "vn-central-1"
+    s3ForcePathStyle: "true"
+    s3Url: "https://os.viettelcloud.vn"
