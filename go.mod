@@ -1,4 +1,4 @@
-module github.com/amunthestormer/mig-controller
+module github.com/konveyor/mig-controller
 
 go 1.18
 
@@ -17,6 +17,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.3.0
 	github.com/konveyor/crane-lib v0.0.11
+	github.com/konveyor/mig-controller v0.0.0-20240108143153-53fee4240ef7
 	github.com/konveyor/openshift-velero-plugin v0.0.0-20210729141849-876132e34f3d
 	github.com/mattn/go-sqlite3 v1.14.4
 	github.com/onsi/ginkgo v1.16.5
@@ -51,7 +52,6 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/BurntSushi/toml v0.4.1 // indirect
-	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/Microsoft/hcsshim v0.8.24 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
@@ -67,14 +67,12 @@ require (
 	github.com/containers/ocicrypt v1.1.2 // indirect
 	github.com/containers/storage v1.37.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dnaeon/go-vcr v1.1.0 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v20.10.11+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/elazarl/goproxy v0.0.0-20201021153353-00ad82a08272 // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -110,6 +108,7 @@ require (
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
+	github.com/konveyor/controller v0.4.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
