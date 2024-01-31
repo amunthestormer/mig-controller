@@ -1,4 +1,4 @@
-module github.com/konveyor/mig-controller
+module github.com/amunthestormer/mig-controller
 
 go 1.18
 
