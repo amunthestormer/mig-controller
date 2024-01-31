@@ -10,7 +10,7 @@ import (
 // Common labels
 const (
 	PartOfLabel = "app.kubernetes.io/part-of" // = Application
-	Application = "openshift-migration"
+	Application = "mig-operator"
 )
 
 // Build label (key, value) used to correlate CRs.

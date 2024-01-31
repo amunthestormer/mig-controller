@@ -291,7 +291,7 @@ func (r ReconcileMigMigration) validatePlan(ctx context.Context, migration *miga
 //	When validating `stage` migrations:
 //	  A final migration has started or has completed.
 //	When validating `final` migrations:
-//	  A final migratoin has successfully completed.
+//	  A final migration has successfully completed.
 func (r ReconcileMigMigration) validateFinalMigration(ctx context.Context, plan *migapi.MigPlan,
 	migration *migapi.MigMigration) error {
 	if opentracing.SpanFromContext(ctx) != nil {

@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
@@ -29,16 +28,17 @@ var Settings = &settings.Settings
 const (
 	AwsAccessKeyId          = "aws-access-key-id"
 	AwsSecretAccessKey      = "aws-secret-access-key"
-	AwsCloudSecretName      = "cloud-credentials"
-	AwsCloudCredentialsPath = "credentials/cloud"
+	AwsCloudSecretName      = "aws-credentials"
+	AwsCloudCredentialsPath = "credentials-aws/cloud"
 )
 
 // S3 constants
 const (
 	AwsS3DefaultRegion = "us-east-1"
+	VtcS3DefautRegion  = "vn-central-1"
 )
 
-// Velero cloud-secret.
+// Velero aws-credentials-secret.
 var AwsCloudCredentialsTemplate = `
 [default]
 aws_access_key_id=%s
@@ -119,7 +119,7 @@ func (p *AWSProvider) UpdateVSL(vsl *velero.VolumeSnapshotLocation) {
 
 func (p *AWSProvider) UpdateCloudSecret(secret, cloudSecret *kapi.Secret) error {
 	cloudSecret.Data = map[string][]byte{
-		"cloud": []byte(
+		"aws-credentials": []byte(
 			fmt.Sprintf(
 				AwsCloudCredentialsTemplate,
 				secret.Data[AwsAccessKeyId],
@@ -273,7 +273,7 @@ func (p *AWSProvider) Validate(secret *kapi.Secret) []string {
 // Returns `us-east-1` if no region is specified
 func (p *AWSProvider) GetRegion() string {
 	if p.Region == "" {
-		return AwsS3DefaultRegion
+		return VtcS3DefautRegion
 	}
 	return p.Region
 }
@@ -457,21 +457,21 @@ type Ec2Test struct {
 	secret *kapi.Secret
 }
 
-func (r *Ec2Test) Run() error {
-	ssn, err := r.newSession()
-	if err != nil {
-		return err
-	}
-	// Create volume.
-	volumeId, err := r.create(ssn)
-	if err != nil {
-		return err
-	}
-
-	defer r.delete(ssn, volumeId)
-
-	return nil
-}
+//func (r *Ec2Test) Run() error {
+//	ssn, err := r.newSession()
+//	if err != nil {
+//		return err
+//	}
+//	// Create volume.
+//	volumeId, err := r.create(ssn)
+//	if err != nil {
+//		return err
+//	}
+//
+//	defer r.delete(ssn, volumeId)
+//
+//	return nil
+//}
 
 func (r *Ec2Test) newSession() (*session.Session, error) {
 	return session.NewSession(&aws.Config{
@@ -483,21 +483,22 @@ func (r *Ec2Test) newSession() (*session.Session, error) {
 	})
 }
 
-func (r *Ec2Test) create(ssn *session.Session) (*string, error) {
-	result, err := ec2.New(ssn).CreateVolume(
-		&ec2.CreateVolumeInput{
-			AvailabilityZone: aws.String(r.region + "a"),
-			VolumeType:       aws.String("gp2"),
-			Size:             aws.Int64(1),
-		})
+//func (r *Ec2Test) create(ssn *session.Session) (*string, error) {
+//	result, err := ec2.New(ssn).CreateVolume(
+//		&ec2.CreateVolumeInput{
+//			AvailabilityZone: aws.String(r.region + "a"),
+//			VolumeType:       aws.String("gp2"),
+//			Size:             aws.Int64(1),
+//		})
+//
+//	return result.VolumeId, err
+//}
 
-	return result.VolumeId, err
-}
-
-func (r *Ec2Test) delete(ssn *session.Session, volumeId *string) error {
-	_, err := ec2.New(ssn).DeleteVolume(
-		&ec2.DeleteVolumeInput{
-			VolumeId: volumeId,
-		})
-	return err
-}
+//
+//func (r *Ec2Test) delete(ssn *session.Session, volumeId *string) error {
+//	_, err := ec2.New(ssn).DeleteVolume(
+//		&ec2.DeleteVolumeInput{
+//			VolumeId: volumeId,
+//		})
+//	return err
+//}

@@ -13,7 +13,7 @@ data:
   #     them to this secret. since AWS credentials are base64 compatible already. Be _sure_ to run
   #     `echo -n "<key>" | base64 -w 0` on your access and secret key before providing them below.
   
-  # [Note] these credentials will be injected into cloud-credentials in the 'velero' namespace.
+  # [Note] these credentials will be injected into aws-credentials in the 'velero' namespace.
   aws-access-key-id: aGVsbG8K
   aws-secret-access-key: aGVsbG8K
 

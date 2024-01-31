@@ -112,7 +112,6 @@ type ReconcileMigStorage struct {
 func (r *ReconcileMigStorage) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	var err error
 	log.WithValues("migStorage", request.Name)
-
 	// Fetch the MigStorage instance
 	storage := &migapi.MigStorage{}
 	err = r.Get(context.TODO(), request.NamespacedName, storage)

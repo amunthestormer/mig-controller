@@ -49,7 +49,7 @@ import (
 
 // SA secret keys.
 const (
-	SaToken = "saToken"
+	SaToken = "token"
 )
 
 // migration-cluster-config configmap

@@ -1,17 +1,18 @@
 apiVersion: velero.io/v1
 kind: BackupStorageLocation
 metadata:
-  name: viettel-storage-bsl
-  namespace: velero
+#  name: viettel-storage-bsl
+  name: default
+  namespace: mig-operator
 spec:
   provider: aws
   default: true
   accessMode: ReadWrite
   objectStorage:
-    bucket: "huongdt162-velero"
-    credential:
-      key: cloud
-      name: os-credentials
+    bucket: "thanhph3-migrate"
+  credential:
+    key: aws-credentials
+    name: aws-credentials
   config:
     insecureSkipTLSVerify: "true"
     region: "vn-central-1"

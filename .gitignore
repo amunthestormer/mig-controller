@@ -32,4 +32,4 @@ tools/tilt/tilt-settings.json
 deployexample/gcp-credentials
 deployexample/on-host-cluster/sa-secret-remote.yaml
 deployexample/docs
-deployexample/vtc-credentials
+deployexample/aws-credentials
