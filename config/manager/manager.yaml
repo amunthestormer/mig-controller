@@ -11,7 +11,7 @@ kind: Service
 metadata:
   name: controller-manager-service
   #namespace: openshift-migration
-  namespace: velero
+  namespace: mig-operator
   labels:
     control-plane: controller-manager
     controller-tools.k8s.io: "1.0"
@@ -27,7 +27,7 @@ kind: StatefulSet
 metadata:
   name: controller-manager
   #namespace: openshift-migration
-  namespace: velero
+  namespace: mig-operator
   labels:
     control-plane: controller-manager
     controller-tools.k8s.io: "1.0"
@@ -84,4 +84,4 @@ kind: Secret
 metadata:
   name: webhook-server-secret
   #namespace: openshift-migration
-  namespace: velero
+  namespace: mig-operator

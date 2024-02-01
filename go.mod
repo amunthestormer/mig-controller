@@ -17,7 +17,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.3.0
 	github.com/konveyor/crane-lib v0.0.11
-	github.com/konveyor/mig-controller v0.0.0-20240108143153-53fee4240ef7
 	github.com/konveyor/openshift-velero-plugin v0.0.0-20210729141849-876132e34f3d
 	github.com/mattn/go-sqlite3 v1.14.4
 	github.com/onsi/ginkgo v1.16.5
@@ -28,11 +27,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.15.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
-	github.com/vmware-tanzu/velero v1.12.1
+	github.com/vmware-tanzu/velero v1.10.3
 	go.uber.org/zap v1.24.0
 	golang.org/x/net v0.17.0
 	google.golang.org/api v0.120.0
 	k8s.io/api v0.25.6
+	k8s.io/apiextensions-apiserver v0.24.2
 	k8s.io/apimachinery v0.25.6
 	k8s.io/client-go v0.25.6
 	k8s.io/klog v1.0.0
@@ -52,6 +52,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/BurntSushi/toml v0.4.1 // indirect
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/Microsoft/hcsshim v0.8.24 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
@@ -67,6 +68,7 @@ require (
 	github.com/containers/ocicrypt v1.1.2 // indirect
 	github.com/containers/storage v1.37.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dnaeon/go-vcr v1.2.0 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v20.10.11+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
@@ -108,7 +110,6 @@ require (
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/konveyor/controller v0.4.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
@@ -135,6 +136,7 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20201008174630-78d3cae3a980 // indirect
@@ -170,7 +172,6 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.24.2 // indirect
 	k8s.io/component-base v0.24.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect

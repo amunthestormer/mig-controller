@@ -414,7 +414,7 @@ func (r *MigPlan) BuildRegistryDeployment(storage *MigStorage, proxySecret *kapi
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:    combinedLabels,
 			Name:      name,
-			Namespace: VeleroNamespace,
+			namespace: mig - operatorNamespace,
 		},
 	}
 	r.UpdateRegistryDeployment(storage, deployment, proxySecret, name, dirName, registryImage, mCorrelationLabels, livenessTimeout, readinessTimeout)
@@ -601,7 +601,7 @@ func (r *MigPlan) BuildRegistryService(name string) *kapi.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:    labels,
 			Name:      name,
-			Namespace: VeleroNamespace,
+			namespace: mig - operatorNamespace,
 		},
 	}
 	r.UpdateRegistryService(service, name)
@@ -700,7 +700,7 @@ func (r *MigPlan) GetCloudSecret(client k8sclient.Client, provider pvdr.Provider
 	return GetSecret(
 		client,
 		&kapi.ObjectReference{
-			Namespace: VeleroNamespace,
+			namespace: mig - operatorNamespace,
 			Name:      provider.GetCloudSecretName(),
 		})
 }

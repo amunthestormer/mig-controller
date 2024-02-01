@@ -4,7 +4,7 @@ metadata:
   # any name
   name: change-storage-class-config
   # namespace of velero deployment
-  namespace: velero
+  namespace: mig-operator
   labels:
     # this value-less label identifies the ConfigMap as
     # config for a plugin (i.e. the built-in change storage

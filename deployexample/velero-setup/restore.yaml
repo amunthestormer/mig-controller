@@ -2,7 +2,7 @@ apiVersion: velero.io/v1
 kind: Restore
 metadata: 
  name: migrate-restore
- namespace: velero
+ namespace: mig-operator
 spec: 
 # backupName: migrate-backup
  backupName: migrate-backup

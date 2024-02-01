@@ -2,19 +2,19 @@ apiVersion: migration.openshift.io/v1alpha1
 kind: MigPlan
 metadata:
   name: spec-nfs-migplan
-  namespace: velero
+  namespace: mig-operator
 spec:
   destMigClusterRef:
     name: host
-    namespace: velero
+    namespace: mig-operator
   srcMigClusterRef:
     name: source-cluster
-    namespace: velero
+    namespace: mig-operator
   indirectImageMigration: true
   indirectVolumeMigration: true
   migStorageRef:
     name: gcp-bucket
-    namespace: velero
+    namespace: mig-operator
   namespaces:
     - spec-nfs-namespace
   persistentVolumes:

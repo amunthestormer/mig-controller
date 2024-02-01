@@ -66,7 +66,7 @@ kubectl get secret mig-controller-sa-secret -n openshift-migration -o yaml
 #### MigCluster
 - Tạo một secret từ token vừa lưu với key và saToken và value là token vừa lưu
 ```shell
-kubectl apply -f sa-secret-remote.yaml
+kubectl apply -f sa-token-remote.yaml
 ```
 - Tạo 2 CR MigCluster để xác định 2 cụm migrate và check ready status:
   - host-cluster.yaml chỉ có một trường duy nhất isHostCluster: true

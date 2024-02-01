@@ -69,7 +69,7 @@ var getClusterConfigMapWithData = func(data map[string]string) *corev1.ConfigMap
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ClusterConfigMapName,
-			Namespace: VeleroNamespace,
+			namespace: mig - operatorNamespace,
 		},
 		Data: data,
 	}

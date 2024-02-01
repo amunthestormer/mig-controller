@@ -2,7 +2,7 @@ apiVersion: migration.openshift.io/v1alpha1
 kind: MigStorage
 metadata:
   name: vtc-bucket
-  namespace: velero
+  namespace: mig-operator
 spec:
   backupStorageConfig:
     awsBucketName: thanhph3-migrate
@@ -11,5 +11,5 @@ spec:
     awsS3ForcePathStyle: true
     credsSecretRef:
       name: aws-credentials
-      namespace: velero
+      namespace: mig-operator
   backupStorageProvider: aws

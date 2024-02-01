@@ -108,7 +108,7 @@ oc apply -f migsamples
 cd migsamples
 
 # Remote cluster definition, coordinates, auth details
-oc apply -f sa-secret-remote.yaml
+oc apply -f sa-token-remote.yaml
 oc apply -f mig-cluster-remote.yaml
 
 # Describes where to store data during Migration, storage auth details

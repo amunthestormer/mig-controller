@@ -3,7 +3,7 @@ kind: Backup
 metadata: 
   name: migrate-backup
   # Must be the namespace installed by velero.
-  namespace: velero
+  namespace: mig-operator
 spec: 
 # The resources that only contains the nginx-example namespace.
   includedNamespaces: 
