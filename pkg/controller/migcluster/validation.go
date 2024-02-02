@@ -206,7 +206,7 @@ func (r ReconcileMigCluster) validateSaSecret(ctx context.Context, cluster *miga
 			Status:   True,
 			Reason:   NotFound,
 			Category: Critical,
-			Message: fmt.Sprintf("The `saToken` not found in `serviceAccountSecretRef` secret,"+
+			Message: fmt.Sprintf("The `token` not found in `serviceAccountSecretRef` secret,"+
 				" subject: %s.", path.Join(cluster.Spec.ServiceAccountSecretRef.Namespace,
 				cluster.Spec.ServiceAccountSecretRef.Name)),
 		})
